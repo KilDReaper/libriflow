@@ -58,7 +58,7 @@ class SignupScreen extends StatelessWidget {
                     MySnackBar.show(
                       context,
                       message: "Signup Successful!",
-                      background: Colors.green,
+                      background: Colors.blue,
                     );
 
                     Navigator.push(
