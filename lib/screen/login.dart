@@ -40,8 +40,6 @@ class LoginScreen extends StatelessWidget {
               ),
 
               const SizedBox(height: 20),
-
-              // Login Button
               MyButtonWidgets(
                 text: "Login",
                 onPressed: () {
@@ -79,7 +77,7 @@ class LoginScreen extends StatelessWidget {
                   );
                 },
                 child: const Text(
-                  "Don't have an account? Signup",
+                  "Don't have an account? Signup now",
                   style: TextStyle(fontSize: 16),
                 ),
               )
