@@ -25,12 +25,12 @@ class DashboardScreen extends StatelessWidget {
             const SizedBox(height: 30),
 
             MyButtonWidgets(
-              text: "Logout",
+              text: "Logout Now",
               onPressed: () {
                 MySnackBar.show(
                   context,
                   message: "Logged out!",
-                  background: Colors.red,
+                  background: Colors.blue,
                 );
 
                 Navigator.pushReplacement(
