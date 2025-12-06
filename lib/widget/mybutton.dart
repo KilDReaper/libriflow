@@ -1,38 +1,37 @@
 import 'package:flutter/material.dart';
 
 class MyButtonWidgets extends StatelessWidget {
+  final String text;
+  final VoidCallback onPressed;
+  final Color color;
+
   const MyButtonWidgets({
     super.key,
-    required this.onPressed,
     required this.text,
+    required this.onPressed,
+    this.color = const Color(0xffF25C58), // soft red like screenshot
   });
-
-  final VoidCallback onPressed;
-  final String text;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 30),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 25),
+      child: SizedBox(
+        width: double.infinity,
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.black, // cleaner modern color
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            backgroundColor: color,
+            padding: const EdgeInsets.symmetric(vertical: 14),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
             ),
-            elevation: 4,
-            shadowColor: Colors.black54,
           ),
           onPressed: onPressed,
           child: Text(
             text,
             style: const TextStyle(
+              fontSize: 18,
               color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
             ),
           ),
         ),

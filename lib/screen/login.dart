@@ -14,75 +14,83 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              const Text(
-                "Login",
-                style: TextStyle(
-                  fontSize: 35,
-                  fontWeight: FontWeight.bold,
-                ),
+      backgroundColor: Colors.white,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 60),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: SizedBox(
+                height: 140,
+                width: 140,
+                child: Image.asset("assets/images/Logo.png"),
               ),
+            ),
 
-              const SizedBox(height: 30),
+            const SizedBox(height: 10),
 
-              MyTextFieldWidget(
-                controller: emailController,
-                hintText: "Email",
-              ),
+            MyTextFieldWidget(
+              controller: emailController,
+              hintText: "Email",
+              icon: Icons.close,
+            ),
 
-              // Password
-              MyTextFieldWidget(
-                controller: passwordController,
-                hintText: "Password",
-              ),
+            MyTextFieldWidget(
+              controller: passwordController,
+              hintText: "Password",
+              isPassword: true,
+              icon: Icons.visibility,
+            ),
 
-              const SizedBox(height: 20),
-              MyButtonWidgets(
-                text: "Login",
-                onPressed: () {
-                  if (emailController.text.isEmpty ||
-                      passwordController.text.isEmpty) {
-                    MySnackBar.show(
-                      context,
-                      message: "Fields cannot be empty!",
-                      background: Colors.red,
-                    );
-                  } else {
-                    MySnackBar.show(
-                      context,
-                      message: "Login Successful!",
-                      background: Colors.green,
-                    );
+            const SizedBox(height: 15),
 
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const DashboardScreen(),
-                      ),
-                    );
-                  }
-                },
-              ),
+            MyButtonWidgets(
+              text: "Log In",
+              color: const Color(0xffF25C58), 
+              onPressed: () {
+                if (emailController.text.isEmpty ||
+                    passwordController.text.isEmpty) {
+                  MySnackBar.show(
+                    context,
+                    message: "Fields cannot be empty!",
+                    background: Colors.red,
+                  );
+                } else {
+                  MySnackBar.show(
+                    context,
+                    message: "Login Successful!",
+                    background: Colors.green,
+                  );
 
-              const SizedBox(height: 15),
-
-              GestureDetector(
-                onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => SignupScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const DashboardScreen(),
+                    ),
                   );
-                },
-                child: const Text(
-                  "Don't have an account? Signup now",
-                  style: TextStyle(fontSize: 16),
-                ),
-              )
-            ],
-          ),
+                }
+              },
+            ),
+
+            const SizedBox(height: 15),
+
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SignupScreen()),
+                );
+              },
+              child: const Text(
+                "Don't have an account? Sign up here",
+                style: TextStyle(color: Colors.black54),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+          ],
         ),
       ),
     );

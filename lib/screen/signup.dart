@@ -4,7 +4,6 @@ import 'package:libriflow/screen/login.dart';
 import 'package:libriflow/widget/my_textformfeild.dart';
 import 'package:libriflow/widget/mybutton.dart';
 
-
 class SignupScreen extends StatelessWidget {
   SignupScreen({super.key});
 
@@ -15,75 +14,88 @@ class SignupScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              const Text(
-                "Signup",
-                style: TextStyle(fontSize: 35, fontWeight: FontWeight.bold),
+      backgroundColor: Colors.white,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 60),
+
+            // LOGO AREA
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: SizedBox(
+                height: 140,
+                width: 140,
+                child: Image.asset("assets/images/Logo.png"),
               ),
+            ),
 
-              const SizedBox(height: 30),
+            const SizedBox(height: 10),
 
-              MyTextFieldWidget(
-                controller: nameController,
-                hintText: "Full Name",
+            // TEXTFIELDS
+            MyTextFieldWidget(
+              controller: nameController,
+              hintText: "Full Name",
+              icon: Icons.close,
+            ),
+
+            MyTextFieldWidget(
+              controller: emailController,
+              hintText: "Email",
+              icon: Icons.close,
+            ),
+
+            MyTextFieldWidget(
+              controller: passwordController,
+              hintText: "Password",
+              isPassword: true,
+              icon: Icons.visibility,
+            ),
+
+            const SizedBox(height: 15),
+
+            // SIGNUP BUTTON
+            MyButtonWidgets(
+              text: "Create Account",
+              color: const Color(0xffF25C58),
+              onPressed: () {
+                if (nameController.text.isEmpty ||
+                    emailController.text.isEmpty ||
+                    passwordController.text.isEmpty) {
+                  MySnackBar.show(
+                    context,
+                    message: "All fields are required!",
+                    background: Colors.red,
+                  );
+                } else {
+                  MySnackBar.show(
+                    context,
+                    message: "Signup Successful!",
+                    background: Colors.green,
+                  );
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => LoginScreen()),
+                  );
+                }
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            GestureDetector(
+              onTap: () {
+                Navigator.pop(context);
+              },
+              child: const Text(
+                "Already have an account? Log in here",
+                style: TextStyle(color: Colors.black54),
               ),
+            ),
 
-              MyTextFieldWidget(
-                controller: emailController,
-                hintText: "Email",
-              ),
-
-              MyTextFieldWidget(
-                controller: passwordController,
-                hintText: "Password",
-              ),
-
-              const SizedBox(height: 20),
-
-              MyButtonWidgets(
-                text: "Signup",
-                onPressed: () {
-                  if (nameController.text.isEmpty ||
-                      emailController.text.isEmpty ||
-                      passwordController.text.isEmpty) {
-                    MySnackBar.show(
-                      context,
-                      message: "All fields are required!",
-                      background: Colors.red,
-                    );
-                  } else {
-                    MySnackBar.show(
-                      context,
-                      message: "Signup Successful!",
-                      background: Colors.blue,
-                    );
-
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => LoginScreen(),
-                      ),
-                    );
-                  }
-                },
-              ),
-
-              const SizedBox(height: 15),
-
-              GestureDetector(
-                onTap: () {
-                  Navigator.pop(context);
-                },
-                child: const Text(
-                  "Already have an account? Login",
-                  style: TextStyle(fontSize: 16),
-                ),
-              )
-            ],
-          ),
+            const SizedBox(height: 25),
+          ],
         ),
       ),
     );
