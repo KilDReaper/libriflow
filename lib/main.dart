@@ -1,24 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:libriflow/screen/splash_screen.dart';
+import 'package:libriflow/screen/login.dart';
+// import 'screen/home_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const LibriFlowApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class LibriFlowApp extends StatelessWidget {
+  const LibriFlowApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'My App',
+      title: 'LibriFlow',
       theme: ThemeData(
         useMaterial3: true,
         fontFamily: 'OpenSans',
-        primarySwatch: Colors.blue,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF3F51B5),
+        ),
       ),
-      home: const SplashScreen(),
+      home: LoginScreen(),
     );
   }
 }

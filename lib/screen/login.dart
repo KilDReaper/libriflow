@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:libriflow/common/mysnackbar.dart';
-import 'package:libriflow/screen/dashboard.dart';
+import 'package:libriflow/screen/home_screen.dart';
 import 'package:libriflow/screen/signup.dart';
 import 'package:libriflow/widget/my_textformfeild.dart';
 import 'package:libriflow/widget/mybutton.dart';
@@ -67,7 +67,7 @@ class LoginScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const DashboardScreen(),
+                      builder: (context) => const HomeScreen(),
                     ),
                   );
                 }
