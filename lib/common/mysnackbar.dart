@@ -4,7 +4,7 @@ class MySnackBar {
   static void show(
     BuildContext context, {
     required String message,
-    Color background = Colors.blue,
+    Color background = Colors.green,
     Color textColor = Colors.white,
     int durationSeconds = 2,
   }) {

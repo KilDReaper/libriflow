@@ -85,7 +85,7 @@ class LoginScreen extends StatelessWidget {
               },
               child: const Text(
                 "Don't have an account? Sign up here",
-                style: TextStyle(color: Colors.black54),
+                style: TextStyle(color: Colors.black54,),
               ),
             ),
 

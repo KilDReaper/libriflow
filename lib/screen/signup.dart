@@ -19,8 +19,6 @@ class SignupScreen extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 60),
-
-            // LOGO AREA
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 20),
               child: SizedBox(

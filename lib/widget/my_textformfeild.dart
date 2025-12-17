@@ -11,7 +11,7 @@ class MyTextFieldWidget extends StatelessWidget {
     required this.controller,
     required this.hintText,
     this.isPassword = false,
-    this.icon = Icons.close, // default icon
+    this.icon = Icons.close, 
   });
 
   @override
