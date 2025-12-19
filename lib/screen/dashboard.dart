@@ -128,7 +128,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: GridView.builder(
               padding: const EdgeInsets.all(12),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossCount,
+                crossAxisCount: 2,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
                 childAspectRatio: 0.62,
@@ -165,7 +165,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         borderRadius: BorderRadius.circular(8),
                         child: Image.asset(
                           book["image"],
-                          height: 140,
+                          height: 110,
                           fit: BoxFit.cover,
                         ),
                       ),
