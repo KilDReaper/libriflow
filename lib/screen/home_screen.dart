@@ -13,11 +13,17 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int currentIndex = 0;
 
-  final pages = const [
-    DashboardScreen(),
-    SearchScreen(),
-    LibraryScreen(),
-  ];
+  late final List<Widget> pages;
+
+  @override
+  void initState() {
+    pages = [
+      const DashboardScreen(),
+      const SearchScreen(),
+      const LibraryScreen(),
+    ];
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {

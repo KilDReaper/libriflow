@@ -29,12 +29,22 @@ class _LibraryScreenState extends State<LibraryScreen>
     tabController = TabController(length: 2, vsync: this);
   }
 
-  Widget buildBookGrid(List<Map<String, dynamic>> books) {
+  Widget buildBookGrid(List<Map<String, dynamic>> books, BuildContext context) {
+    double width = MediaQuery.of(context).size.width;
+
+    int crossCount = width > 1000
+        ? 5
+        : width > 800
+            ? 4
+            : width > 600
+                ? 3
+                : 2;
+
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: books.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossCount,
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
         childAspectRatio: 0.65,
@@ -57,7 +67,8 @@ class _LibraryScreenState extends State<LibraryScreen>
             children: [
               Expanded(
                 child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(14)),
                   child: Image.network(
                     books[index]["image"],
                     fit: BoxFit.cover,
@@ -68,7 +79,8 @@ class _LibraryScreenState extends State<LibraryScreen>
                 padding: const EdgeInsets.all(8),
                 child: Text(
                   books[index]["title"],
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  style:
+                      const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -98,8 +110,8 @@ class _LibraryScreenState extends State<LibraryScreen>
       body: TabBarView(
         controller: tabController,
         children: [
-          buildBookGrid(rentedBooks),
-          buildBookGrid(purchasedBooks),
+          buildBookGrid(rentedBooks, context),
+          buildBookGrid(purchasedBooks, context),
         ],
       ),
     );

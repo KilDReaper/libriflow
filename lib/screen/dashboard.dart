@@ -65,10 +65,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Padding(
       padding: const EdgeInsets.only(right: 10),
       child: Chip(
-        label: Text(
-          text,
-          style: const TextStyle(fontFamily: "OpenSans"),
-        ),
+        label: Text(text, style: const TextStyle(fontFamily: "OpenSans")),
         backgroundColor: Colors.grey.shade200,
       ),
     );
@@ -76,12 +73,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+
+    int crossCount = screenWidth > 1000
+        ? 5
+        : screenWidth > 800
+            ? 4
+            : screenWidth > 600
+                ? 3
+                : 2;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("LibriFlow Dashboard"),
         centerTitle: true,
       ),
-      
       body: Column(
         children: [
           Padding(
@@ -102,7 +108,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: SizedBox(
@@ -119,15 +124,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ),
-
           Expanded(
             child: GridView.builder(
               padding: const EdgeInsets.all(12),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossCount,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
-                childAspectRatio: 0.67,
+                childAspectRatio: 0.62,
               ),
               itemCount: filteredBooks.length,
               itemBuilder: (context, index) {
@@ -161,7 +165,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         borderRadius: BorderRadius.circular(8),
                         child: Image.asset(
                           book["image"],
-                          height: 900,
+                          height: 140,
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -172,6 +176,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         book["author"],
@@ -196,7 +202,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               onPressed: () {
                                 MySnackBar.show(
                                   context,
-                                  message: "${book["title"]} rented successfully",
+                                  message:
+                                      "${book["title"]} rented successfully",
                                 );
                               },
                               child: const Text(
@@ -214,7 +221,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               onPressed: () {
                                 MySnackBar.show(
                                   context,
-                                  message: "${book["title"]} purchased successfully",
+                                  message:
+                                      "${book["title"]} purchased successfully",
                                 );
                               },
                               child: const Text(

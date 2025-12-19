@@ -46,6 +46,7 @@ class _SearchScreenState extends State<SearchScreen> {
         .toList();
 
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(title: const Text("Search Books")),
       body: Padding(
         padding: const EdgeInsets.all(16),
