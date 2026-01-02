@@ -4,8 +4,8 @@ import 'package:libriflow/common/mysnackbar.dart';
 import 'package:libriflow/widget/my_textformfeild.dart';
 import 'package:libriflow/widget/mybutton.dart';
 import '../../presentation/controllers/auth_controller.dart';
-import 'signup_view.dart';
 import '../../../home/presentation/views/home_view.dart';
+import 'signup_view.dart';
 
 class LoginView extends StatelessWidget {
   LoginView({super.key});
@@ -90,6 +90,18 @@ class LoginView extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (_) => SignupView(),
+                    ),
+                  );
+                },
+                child: const Text("Don't have an account? Sign up"),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 
 
