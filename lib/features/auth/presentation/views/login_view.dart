@@ -1,15 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:libriflow/common/mysnackbar.dart';
-import 'package:libriflow/screen/home_screen.dart';
-import 'package:libriflow/screen/signup_screen.dart';
 import 'package:libriflow/widget/my_textformfeild.dart';
 import 'package:libriflow/widget/mybutton.dart';
+import '../../presentation/controllers/auth_controller.dart';
+import '../../../home/presentation/views/home_view.dart';
+import 'signup_view.dart';
 
-class LoginScreen extends StatelessWidget {
-  LoginScreen({super.key});
+class LoginView extends StatefulWidget {
+  const LoginView({super.key});
 
+  @override
+  State<LoginView> createState() => _LoginViewState();
+}
+
+class _LoginViewState extends State<LoginView> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  late AuthController authController;
+
+  @override
+  void initState() {
+    super.initState();
+    authController = AuthController(Hive.box('users'));
+  }
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,30 +42,24 @@ class LoginScreen extends StatelessWidget {
           child: Column(
             children: [
               const SizedBox(height: 40),
-
               SizedBox(
                 height: 140,
                 width: 140,
                 child: Image.asset("assets/images/Logo.png"),
               ),
-
               const SizedBox(height: 30),
-
               MyTextFieldWidget(
                 controller: emailController,
                 hintText: "Email",
                 icon: Icons.mail,
               ),
-
               MyTextFieldWidget(
                 controller: passwordController,
                 hintText: "Password",
                 isPassword: true,
                 icon: Icons.lock,
               ),
-
               const SizedBox(height: 25),
-
               MyButtonWidgets(
                 text: "Log In",
                 color: const Color(0xffF25C58),
@@ -53,47 +68,42 @@ class LoginScreen extends StatelessWidget {
                       passwordController.text.isEmpty) {
                     MySnackBar.show(
                       context,
-                      message: "Fields cannot be empty!",
+                      message: "Fields cannot be empty",
                       background: Colors.red,
                     );
-                  } else {
+                    return;
+                  }
+
+                  final success = authController.login(
+                    emailController.text,
+                    passwordController.text,
+                  );
+
+                  if (!success) {
                     MySnackBar.show(
                       context,
-                      message: "Login Successful!",
-                      background: Colors.green,
+                      message: "Invalid email or password",
+                      background: Colors.red,
                     );
-
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const HomeScreen(),
-                      ),
-                    );
+                    return;
                   }
+
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HomeView()),
+                  );
                 },
               ),
-
               const SizedBox(height: 20),
-
               GestureDetector(
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => SignupScreen(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const SignupView()),
                   );
                 },
-                child: const Text(
-                  "Don't have an account? Sign up here",
-                  style: TextStyle(
-                    color: Colors.black54,
-                    fontSize: 14,
-                  ),
-                ),
+                child: const Text("Don't have an account? Sign up"),
               ),
-
-              const SizedBox(height: 25),
             ],
           ),
         ),

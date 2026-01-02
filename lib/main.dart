@@ -1,27 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:libriflow/screen/login_screen.dart';
-// import 'screen/home_screen.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:libriflow/features/auth/presentation/views/login_view.dart';
 
-void main() {
-  runApp(const LibriFlowApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  await Hive.openBox('users');
+  runApp(const MyApp());
 }
 
-class LibriFlowApp extends StatelessWidget {
-  const LibriFlowApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'LibriFlow',
-      theme: ThemeData(
-        useMaterial3: true,
-        fontFamily: 'OpenSans',
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF3F51B5),
-        ),
-      ),
-      home: LoginScreen(),
+      home: LoginView(),
     );
   }
 }

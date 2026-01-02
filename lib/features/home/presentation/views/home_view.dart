@@ -1,28 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:libriflow/screen/dashboard.dart';
-import 'search_screen.dart';
-import 'library_screen.dart';
+import 'dashboard_view.dart';
+import 'search_view.dart';
+import 'library_view.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class HomeView extends StatefulWidget {
+  const HomeView({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeView> createState() => _HomeViewState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeViewState extends State<HomeView> {
   int currentIndex = 0;
 
   late final List<Widget> pages;
 
   @override
   void initState() {
-    pages = [
-      const DashboardScreen(),
-      const SearchScreen(),
-      const LibraryScreen(),
-    ];
     super.initState();
+    pages = const [
+      DashboardView(),
+      SearchView(),
+      LibraryView(),
+    ];
   }
 
   @override
@@ -47,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           NavigationDestination(
             icon: Icon(Icons.library_books),
-            label: "My Library",
+            label: "Library",
           ),
         ],
       ),
