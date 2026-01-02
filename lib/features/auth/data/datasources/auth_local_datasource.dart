@@ -7,19 +7,17 @@ class AuthLocalDatasource {
   AuthLocalDatasource(this.box);
 
   Future<bool> signup(UserModel user) async {
-    if (box.containsKey(user.email)) {
-      return false; // user already exists
-    }
-    await box.put(user.email, user.toMap());
+    final key = user.email.trim().toLowerCase();
+    if (box.containsKey(key)) return false;
+    await box.put(key, user.toMap());
     return true;
   }
 
   bool login(String email, String password) {
-    if (!box.containsKey(email)) return false;
-
-    final userMap = box.get(email);
-    final user = UserModel.fromMap(Map<String, dynamic>.from(userMap));
-
-    return user.password == password;
+    final key = email.trim().toLowerCase();
+    if (!box.containsKey(key)) return false;
+    final data = Map<String, dynamic>.from(box.get(key));
+    final user = UserModel.fromMap(data);
+    return user.password == password.trim();
   }
 }

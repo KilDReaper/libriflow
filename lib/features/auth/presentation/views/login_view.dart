@@ -7,12 +7,30 @@ import '../../presentation/controllers/auth_controller.dart';
 import '../../../home/presentation/views/home_view.dart';
 import 'signup_view.dart';
 
-class LoginView extends StatelessWidget {
-  LoginView({super.key});
+class LoginView extends StatefulWidget {
+  const LoginView({super.key});
 
+  @override
+  State<LoginView> createState() => _LoginViewState();
+}
+
+class _LoginViewState extends State<LoginView> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-  final AuthController controller = AuthController(Hive.box('users'));
+  late AuthController authController;
+
+  @override
+  void initState() {
+    super.initState();
+    authController = AuthController(Hive.box('users'));
+  }
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,30 +42,24 @@ class LoginView extends StatelessWidget {
           child: Column(
             children: [
               const SizedBox(height: 40),
-
               SizedBox(
                 height: 140,
                 width: 140,
                 child: Image.asset("assets/images/Logo.png"),
               ),
-
               const SizedBox(height: 30),
-
               MyTextFieldWidget(
                 controller: emailController,
                 hintText: "Email",
                 icon: Icons.mail,
               ),
-
               MyTextFieldWidget(
                 controller: passwordController,
                 hintText: "Password",
                 isPassword: true,
                 icon: Icons.lock,
               ),
-
               const SizedBox(height: 25),
-
               MyButtonWidgets(
                 text: "Log In",
                 color: const Color(0xffF25C58),
@@ -56,13 +68,13 @@ class LoginView extends StatelessWidget {
                       passwordController.text.isEmpty) {
                     MySnackBar.show(
                       context,
-                      message: "Fields cannot be empty!",
+                      message: "Fields cannot be empty",
                       background: Colors.red,
                     );
                     return;
                   }
 
-                  final success = controller.login(
+                  final success = authController.login(
                     emailController.text,
                     passwordController.text,
                   );
@@ -73,24 +85,21 @@ class LoginView extends StatelessWidget {
                       message: "Invalid email or password",
                       background: Colors.red,
                     );
-                  } else {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const HomeView()),
-                    );
+                    return;
                   }
+
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HomeView()),
+                  );
                 },
               ),
-
               const SizedBox(height: 20),
-
               GestureDetector(
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => SignupView(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const SignupView()),
                   );
                 },
                 child: const Text("Don't have an account? Sign up"),
@@ -102,156 +111,3 @@ class LoginView extends StatelessWidget {
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

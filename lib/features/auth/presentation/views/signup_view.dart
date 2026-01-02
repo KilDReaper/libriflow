@@ -1,98 +1,111 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:libriflow/common/mysnackbar.dart';
 import 'package:libriflow/widget/my_textformfeild.dart';
 import 'package:libriflow/widget/mybutton.dart';
-import 'login_view.dart';
-class SignupView extends StatelessWidget {
-  SignupView({super.key});
+import '../../presentation/controllers/auth_controller.dart';
 
+class SignupView extends StatefulWidget {
+  const SignupView({super.key});
+
+  @override
+  State<SignupView> createState() => _SignupViewState();
+}
+
+class _SignupViewState extends State<SignupView> {
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  late AuthController authController;
+
+  @override
+  void initState() {
+    super.initState();
+    authController = AuthController(Hive.box('users'));
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 60),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: SizedBox(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 25),
+          child: Column(
+            children: [
+              const SizedBox(height: 40),
+              SizedBox(
                 height: 140,
                 width: 140,
                 child: Image.asset("assets/images/Logo.png"),
               ),
-            ),
+              const SizedBox(height: 30),
+              MyTextFieldWidget(
+                controller: nameController,
+                hintText: "Name",
+                icon: Icons.person,
+              ),
+              MyTextFieldWidget(
+                controller: emailController,
+                hintText: "Email",
+                icon: Icons.mail,
+              ),
+              MyTextFieldWidget(
+                controller: passwordController,
+                hintText: "Password",
+                isPassword: true,
+                icon: Icons.lock,
+              ),
+              const SizedBox(height: 25),
+              MyButtonWidgets(
+                text: "Sign Up",
+                color: const Color(0xffF25C58),
+                onPressed: () async {
+                  if (nameController.text.isEmpty ||
+                      emailController.text.isEmpty ||
+                      passwordController.text.isEmpty) {
+                    MySnackBar.show(
+                      context,
+                      message: "Fields cannot be empty",
+                      background: Colors.red,
+                    );
+                    return;
+                  }
 
-            const SizedBox(height: 10),
-
-            // TEXTFIELDS
-            MyTextFieldWidget(
-              controller: nameController,
-              hintText: "Full Name",
-              icon: Icons.close,
-            ),
-
-            MyTextFieldWidget(
-              controller: emailController,
-              hintText: "Email",
-              icon: Icons.close,
-            ),
-
-            MyTextFieldWidget(
-              controller: passwordController,
-              hintText: "Password",
-              isPassword: true,
-              icon: Icons.visibility,
-            ),
-
-            const SizedBox(height: 15),
-
-            // SIGNUP BUTTON
-            MyButtonWidgets(
-              text: "Create Account",
-              color: const Color(0xffF25C58),
-              onPressed: () {
-                if (nameController.text.isEmpty ||
-                    emailController.text.isEmpty ||
-                    passwordController.text.isEmpty) {
-                  MySnackBar.show(
-                    context,
-                    message: "All fields are required!",
-                    background: Colors.red,
+                  final success = await authController.signup(
+                    nameController.text,
+                    emailController.text,
+                    passwordController.text,
                   );
-                } else {
+
+                  if (!success) {
+                    MySnackBar.show(
+                      context,
+                      message: "Email already exists",
+                      background: Colors.red,
+                    );
+                    return;
+                  }
+
                   MySnackBar.show(
                     context,
-                    message: "Signup Successful!",
+                    message: "Signup successful",
                     background: Colors.green,
                   );
 
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => LoginView()),
-                  );
-                }
-              },
-            ),
-
-            const SizedBox(height: 20),
-
-            GestureDetector(
-              onTap: () {
-                Navigator.pop(context);
-              },
-              child: const Text(
-                "Already have an account? Log in here",
-                style: TextStyle(color: Colors.black54),
+                  Navigator.pop(context);
+                },
               ),
-            ),
-
-            const SizedBox(height: 25),
-          ],
+            ],
+          ),
         ),
       ),
     );
