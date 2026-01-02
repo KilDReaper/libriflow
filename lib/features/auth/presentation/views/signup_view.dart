@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:libriflow/common/mysnackbar.dart';
-import 'package:libriflow/features/auth/presentation/views/login_view.dart';
 import 'package:libriflow/widget/my_textformfeild.dart';
 import 'package:libriflow/widget/mybutton.dart';
-
-class SignupScreen extends StatelessWidget {
-  SignupScreen({super.key});
+import 'login_view.dart';
+class SignupView extends StatelessWidget {
+  SignupView({super.key});
 
   final nameController = TextEditingController();
   final emailController = TextEditingController();
@@ -74,7 +73,7 @@ class SignupScreen extends StatelessWidget {
 
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => LoginScreen()),
+                    MaterialPageRoute(builder: (_) => LoginView()),
                   );
                 }
               },

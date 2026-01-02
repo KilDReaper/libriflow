@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:libriflow/screen/dashboard.dart';
+import 'package:libriflow/features/home/presentation/views/dashboard.dart';
 import 'search_screen.dart';
 import 'library_screen.dart';
 
