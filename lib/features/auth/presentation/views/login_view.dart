@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:libriflow/common/mysnackbar.dart';
-import 'package:libriflow/screen/home_screen.dart';
-import 'package:libriflow/features/auth/presentation/views/signup_view.dart';
 import 'package:libriflow/widget/my_textformfeild.dart';
 import 'package:libriflow/widget/mybutton.dart';
+import '../../presentation/controllers/auth_controller.dart';
+import 'signup_view.dart';
+import '../../../home/presentation/views/home_view.dart';
 
-class LoginScreen extends StatelessWidget {
-  LoginScreen({super.key});
+class LoginView extends StatelessWidget {
+  LoginView({super.key});
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final AuthController controller = AuthController(Hive.box('users'));
 
   @override
   Widget build(BuildContext context) {
@@ -56,18 +59,24 @@ class LoginScreen extends StatelessWidget {
                       message: "Fields cannot be empty!",
                       background: Colors.red,
                     );
-                  } else {
+                    return;
+                  }
+
+                  final success = controller.login(
+                    emailController.text,
+                    passwordController.text,
+                  );
+
+                  if (!success) {
                     MySnackBar.show(
                       context,
-                      message: "Login Successful!",
-                      background: Colors.green,
+                      message: "Invalid email or password",
+                      background: Colors.red,
                     );
-
-                    Navigator.push(
+                  } else {
+                    Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const HomeScreen(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const HomeView()),
                     );
                   }
                 },
@@ -80,24 +89,157 @@ class LoginScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => SignupScreen(),
-                    ),
-                  );
-                },
-                child: const Text(
-                  "Don't have an account? Sign up here",
-                  style: TextStyle(
-                    color: Colors.black54,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
+                      builder: (_) => SignupView(),
 
-              const SizedBox(height: 25),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
