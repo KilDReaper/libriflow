@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:libriflow/screen/login_screen.dart';
-// import 'screen/home_screen.dart';
+import 'package:libriflow/features/auth/presentation/views/login_view.dart';
 
 void main() {
   runApp(const LibriFlowApp());

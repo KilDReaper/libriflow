@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:libriflow/screen/login_screen.dart';
+import 'package:libriflow/features/auth/presentation/views/login_view.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

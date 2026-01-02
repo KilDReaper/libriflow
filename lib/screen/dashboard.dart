@@ -210,7 +210,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 "Rent",
                                 style: TextStyle(
                                   fontFamily: "OpenSans",
-                                  fontWeight: FontWeight.bold,
+                                
                                 ),
                               ),
                             ),

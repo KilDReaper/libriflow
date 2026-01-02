@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:libriflow/common/mysnackbar.dart';
 import 'package:libriflow/screen/home_screen.dart';
-import 'package:libriflow/screen/signup_screen.dart';
+import 'package:libriflow/features/auth/presentation/views/signup_view.dart';
 import 'package:libriflow/widget/my_textformfeild.dart';
 import 'package:libriflow/widget/mybutton.dart';
 

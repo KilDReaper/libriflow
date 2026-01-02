@@ -46,7 +46,6 @@ class _SearchScreenState extends State<SearchScreen> {
         .toList();
 
     return Scaffold(
-      backgroundColor: Colors.black,
       appBar: AppBar(title: const Text("Search Books")),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -137,7 +136,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                 borderRadius: BorderRadius.circular(8),
                                 child: Image.network(
                                   book["image"],
-                                  height: 700,
+                                  height: 180,
                                   width: double.infinity,
                                   fit: BoxFit.cover,
                                 ),
