@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
 
-class LibraryScreen extends StatefulWidget {
-  const LibraryScreen({super.key});
+class LibraryView extends StatefulWidget {
+  const LibraryView({super.key});
 
   @override
-  State<LibraryScreen> createState() => _LibraryScreenState();
+  State<LibraryView> createState() => _LibraryViewState();
 }
 
-class _LibraryScreenState extends State<LibraryScreen>
+class _LibraryViewState extends State<LibraryView>
     with SingleTickerProviderStateMixin {
   late TabController tabController;
 
   final List<Map<String, dynamic>> rentedBooks = [
     {"title": "The Art of War", "image": "https://picsum.photos/200?random=1"},
     {"title": "Atomic Habits", "image": "https://picsum.photos/200?random=2"},
-    {"title": "Deep Work", "image": "https://picsum.photos/200?random=3"}
+    {"title": "Deep Work", "image": "https://picsum.photos/200?random=3"},
   ];
 
   final List<Map<String, dynamic>> purchasedBooks = [
     {"title": "Harry Potter", "image": "https://picsum.photos/200?random=4"},
     {"title": "Rich Dad Poor Dad", "image": "https://picsum.photos/200?random=5"},
-    {"title": "The Hobbit", "image": "https://picsum.photos/200?random=6"}
+    {"title": "The Hobbit", "image": "https://picsum.photos/200?random=6"},
   ];
 
   @override
@@ -30,9 +30,9 @@ class _LibraryScreenState extends State<LibraryScreen>
   }
 
   Widget buildBookGrid(List<Map<String, dynamic>> books, BuildContext context) {
-    double width = MediaQuery.of(context).size.width;
+    final width = MediaQuery.of(context).size.width;
 
-    int crossCount = width > 1000
+    final crossCount = width > 1000
         ? 5
         : width > 800
             ? 4
@@ -50,11 +50,12 @@ class _LibraryScreenState extends State<LibraryScreen>
         childAspectRatio: 0.65,
       ),
       itemBuilder: (context, index) {
+        final book = books[index];
         return Container(
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(14),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
                 color: Colors.black12,
                 blurRadius: 6,
@@ -67,10 +68,9 @@ class _LibraryScreenState extends State<LibraryScreen>
             children: [
               Expanded(
                 child: ClipRRect(
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(14)),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
                   child: Image.network(
-                    books[index]["image"],
+                    book["image"],
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -78,9 +78,8 @@ class _LibraryScreenState extends State<LibraryScreen>
               Padding(
                 padding: const EdgeInsets.all(8),
                 child: Text(
-                  books[index]["title"],
-                  style:
-                      const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  book["title"],
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),

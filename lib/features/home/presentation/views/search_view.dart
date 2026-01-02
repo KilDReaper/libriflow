@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 
-class SearchScreen extends StatefulWidget {
-  const SearchScreen({super.key});
+class SearchView extends StatefulWidget {
+  const SearchView({super.key});
 
   @override
-  State<SearchScreen> createState() => _SearchScreenState();
+  State<SearchView> createState() => _SearchViewState();
 }
 
-class _SearchScreenState extends State<SearchScreen> {
-  final TextEditingController controller = TextEditingController();
+class _SearchViewState extends State<SearchView> {
+  final TextEditingController searchController = TextEditingController();
+  String searchText = "";
 
   final List<String> categories = [
     "Fiction",
@@ -23,7 +24,8 @@ class _SearchScreenState extends State<SearchScreen> {
     {
       "title": "Flutter for Beginners",
       "author": "John Adams",
-      "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ855e1EnC0jUgGQbFetgA1Kvwog6HQf2lfkA&s"
+      "image":
+          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ855e1EnC0jUgGQbFetgA1Kvwog6HQf2lfkA&s"
     },
     {
       "title": "Data Structures in Python",
@@ -33,24 +35,27 @@ class _SearchScreenState extends State<SearchScreen> {
     {
       "title": "The Silent Patient",
       "author": "Alex Michaelides",
-      "image": "https://static.wixstatic.com/media/b077d4_c764f44d42d840a29ae3ea49155d50de~mv2.jpg/v1/fill/w_414,h_454,al_c,q_80,usm_1.20_1.00_0.01,enc_avif,quality_auto/b077d4_c764f44d42d840a29ae3ea49155d50de~mv2.jpg"
+      "image":
+          "https://static.wixstatic.com/media/b077d4_c764f44d42d840a29ae3ea49155d50de~mv2.jpg"
     },
   ];
 
-  String searchText = "";
+  List<Map<String, dynamic>> get filteredBooks {
+    return books
+        .where((b) =>
+            b["title"].toLowerCase().contains(searchText.toLowerCase()))
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final filtered = books
-        .where((b) => b["title"].toLowerCase().contains(searchText.toLowerCase()))
-        .toList();
-
     return Scaffold(
       appBar: AppBar(title: const Text("Search Books")),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            // Search Field
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
@@ -58,7 +63,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 color: Colors.grey.shade200,
               ),
               child: TextField(
-                controller: controller,
+                controller: searchController,
                 onChanged: (v) {
                   setState(() {
                     searchText = v;
@@ -70,7 +75,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.clear),
                     onPressed: () {
-                      controller.clear();
+                      searchController.clear();
                       setState(() {
                         searchText = "";
                       });
@@ -79,7 +84,10 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               ),
             ),
+
             const SizedBox(height: 16),
+
+            // Categories
             SizedBox(
               height: 40,
               child: ListView(
@@ -97,7 +105,10 @@ class _SearchScreenState extends State<SearchScreen> {
                     .toList(),
               ),
             ),
+
             const SizedBox(height: 16),
+
+            // Books Grid
             Expanded(
               child: searchText.isEmpty
                   ? const Center(
@@ -107,7 +118,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       ),
                     )
                   : GridView.builder(
-                      itemCount: filtered.length,
+                      itemCount: filteredBooks.length,
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
@@ -116,7 +127,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         mainAxisSpacing: 12,
                       ),
                       itemBuilder: (context, index) {
-                        final book = filtered[index];
+                        final book = filteredBooks[index];
                         return Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
@@ -127,7 +138,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                 blurRadius: 5,
                                 spreadRadius: 1,
                                 color: Colors.black.withOpacity(0.05),
-                              )
+                              ),
                             ],
                           ),
                           child: Column(
@@ -162,7 +173,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         );
                       },
                     ),
-            )
+            ),
           ],
         ),
       ),

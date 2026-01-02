@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import '/common/mysnackbar.dart';
 
-class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+class DashboardView extends StatefulWidget {
+  const DashboardView({super.key});
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  State<DashboardView> createState() => _DashboardViewState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardViewState extends State<DashboardView> {
   final TextEditingController searchController = TextEditingController();
 
   final List<Map<String, dynamic>> books = [
@@ -42,30 +42,62 @@ class _DashboardScreenState extends State<DashboardScreen> {
     },
   ];
 
-  List<Map<String, dynamic>> filteredBooks = [];
+  late List<Map<String, dynamic>> filteredBooks;
+
+  final List<String> categories = [
+    "All",
+    "Programming",
+    "Self-help",
+    "AI",
+    "Technology",
+  ];
+
+  String selectedCategory = "All";
 
   @override
   void initState() {
-    filteredBooks = books;
     super.initState();
+    filteredBooks = List.from(books);
   }
 
   void searchBook(String query) {
     setState(() {
-      filteredBooks = books
-          .where((book) =>
-              book["title"].toLowerCase().contains(query.toLowerCase()) ||
-              book["author"].toLowerCase().contains(query.toLowerCase()) ||
-              book["section"].toLowerCase().contains(query.toLowerCase()))
-          .toList();
+      filteredBooks = books.where((book) {
+        final matchQuery = book["title"]
+                .toString()
+                .toLowerCase()
+                .contains(query.toLowerCase()) ||
+            book["author"]
+                .toString()
+                .toLowerCase()
+                .contains(query.toLowerCase());
+        final matchCategory = selectedCategory == "All"
+            ? true
+            : book["section"] == selectedCategory;
+        return matchQuery && matchCategory;
+      }).toList();
+    });
+  }
+
+  void selectCategory(String category) {
+    setState(() {
+      selectedCategory = category;
+      searchBook(searchController.text);
     });
   }
 
   Widget _categoryChip(String text) {
+    final isSelected = text == selectedCategory;
     return Padding(
       padding: const EdgeInsets.only(right: 10),
-      child: Chip(
-        label: Text(text, style: const TextStyle(fontFamily: "OpenSans")),
+      child: ChoiceChip(
+        label: Text(
+          text,
+          style: const TextStyle(fontFamily: "OpenSans"),
+        ),
+        selected: isSelected,
+        onSelected: (_) => selectCategory(text),
+        selectedColor: Colors.blue.shade300,
         backgroundColor: Colors.grey.shade200,
       ),
     );
@@ -73,9 +105,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery.of(context).size.width;
 
-    int crossCount = screenWidth > 1000
+    final crossCount = screenWidth > 1000
         ? 5
         : screenWidth > 800
             ? 4
@@ -108,27 +140,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: SizedBox(
-              height: 40,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  _categoryChip("All"),
-                  _categoryChip("Programming"),
-                  _categoryChip("Self-help"),
-                  _categoryChip("AI"),
-                  _categoryChip("Technology"),
-                ],
-              ),
+          SizedBox(
+            height: 40,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: categories.map(_categoryChip).toList(),
             ),
           ),
+          const SizedBox(height: 8),
           Expanded(
             child: GridView.builder(
               padding: const EdgeInsets.all(12),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
+                crossAxisCount: crossCount,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
                 childAspectRatio: 0.62,
@@ -208,10 +233,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               },
                               child: const Text(
                                 "Rent",
-                                style: TextStyle(
-                                  fontFamily: "OpenSans",
-                                
-                                ),
+                                style: TextStyle(fontFamily: "OpenSans"),
                               ),
                             ),
                           ),
