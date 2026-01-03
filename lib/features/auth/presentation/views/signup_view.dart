@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:libriflow/common/mysnackbar.dart';
+import 'package:libriflow/features/auth/presentation/views/login_view.dart';
 import 'package:libriflow/widget/my_textformfeild.dart';
 import 'package:libriflow/widget/mybutton.dart';
 import '../../presentation/controllers/auth_controller.dart';
@@ -79,6 +80,16 @@ class _SignupViewState extends State<SignupView> {
                     );
                     return;
                   }
+              const SizedBox(height: 20);
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginView()),
+                  );
+                },
+                child: const Text("Already have an account? login"),
+              );
 
                   final success = await authController.signup(
                     nameController.text,
