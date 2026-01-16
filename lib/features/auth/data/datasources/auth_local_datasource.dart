@@ -1,23 +1,17 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import '../models/user_model.dart';
 
 class AuthLocalDatasource {
   final Box box;
 
   AuthLocalDatasource(this.box);
 
-  Future<bool> signup(UserModel user) async {
-    final key = user.email.trim().toLowerCase();
-    if (box.containsKey(key)) return false;
-    await box.put(key, user.toMap());
-    return true;
+  Future<void> saveToken(String token) async {
+    await box.put('token', token);
   }
-
-  bool login(String email, String password) {
-    final key = email.trim().toLowerCase();
-    if (!box.containsKey(key)) return false;
-    final data = Map<String, dynamic>.from(box.get(key));
-    final user = UserModel.fromMap(data);
-    return user.password == password.trim();
+  String? getToken() {
+    return box.get('token');
+  }
+  Future<void> clearToken() async {
+    await box.delete('token');
   }
 }

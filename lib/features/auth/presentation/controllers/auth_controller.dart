@@ -1,25 +1,34 @@
-import 'package:hive/hive.dart';
-import '../../data/datasources/auth_local_datasource.dart';
-import '../../data/models/user_model.dart';
+import 'package:flutter/material.dart';
+import '../../domain/repositories/auth_repository.dart';
 
-class AuthController {
-  final AuthLocalDatasource datasource;
+class AuthController extends ChangeNotifier {
+  final AuthRepository repository;
 
-  AuthController(Box box) : datasource = AuthLocalDatasource(box);
+  AuthController(this.repository);
 
-  Future<bool> signup(String name, String email, String password) async {
-    final user = UserModel(
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      password: password.trim(),
-    );
-    return datasource.signup(user);
+  bool isLoading = false;
+
+  Future<void> login(String email, String password) async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      await repository.login(email, password);
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
-  bool login(String email, String password) {
-    return datasource.login(
-      email.trim().toLowerCase(),
-      password.trim(),
-    );
+  Future<void> signup(String email, String password) async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      await repository.signup(email, password);
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 }

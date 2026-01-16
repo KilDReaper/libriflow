@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:libriflow/common/mysnackbar.dart';
+import 'package:libriflow/features/auth/domain/repositories/auth_repository_impl.dart';
 import 'package:libriflow/widget/my_textformfeild.dart';
 import 'package:libriflow/widget/mybutton.dart';
+
 import '../../presentation/controllers/auth_controller.dart';
 import '../../../home/presentation/views/home_view.dart';
 import 'signup_view.dart';
+
+import '../../data/datasources/auth_local_datasource.dart';
+import '../../data/datasources/auth_remote_datasource.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -22,7 +27,15 @@ class _LoginViewState extends State<LoginView> {
   @override
   void initState() {
     super.initState();
-    authController = AuthController(Hive.box('users'));
+
+    final local = AuthLocalDatasource(Hive.box('auth'));
+    final remote = AuthRemoteDatasource();
+    final repository = AuthRepositoryImpl(
+      local: local,
+      remote: remote,
+    );
+
+    authController = AuthController(repository);
   }
 
   @override
@@ -30,6 +43,36 @@ class _LoginViewState extends State<LoginView> {
     emailController.dispose();
     passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _login() async {
+    if (emailController.text.isEmpty ||
+        passwordController.text.isEmpty) {
+      MySnackBar.show(
+        context,
+        message: "Fields cannot be empty",
+        background: Colors.red,
+      );
+      return;
+    }
+
+    try {
+      await authController.login(
+        emailController.text.trim(),
+        passwordController.text.trim(),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeView()),
+      );
+    } catch (e) {
+      MySnackBar.show(
+        context,
+        message: "Invalid email or password",
+        background: Colors.red,
+      );
+    }
   }
 
   @override
@@ -63,36 +106,7 @@ class _LoginViewState extends State<LoginView> {
               MyButtonWidgets(
                 text: "Log In",
                 color: const Color(0xffF25C58),
-                onPressed: () {
-                  if (emailController.text.isEmpty ||
-                      passwordController.text.isEmpty) {
-                    MySnackBar.show(
-                      context,
-                      message: "Fields cannot be empty",
-                      background: Colors.red,
-                    );
-                    return;
-                  }
-
-                  final success = authController.login(
-                    emailController.text,
-                    passwordController.text,
-                  );
-
-                  if (!success) {
-                    MySnackBar.show(
-                      context,
-                      message: "Invalid email or password",
-                      background: Colors.red,
-                    );
-                    return;
-                  }
-
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const HomeView()),
-                  );
-                },
+                onPressed: _login,
               ),
               const SizedBox(height: 20),
               GestureDetector(
