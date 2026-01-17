@@ -46,34 +46,33 @@ class _LoginViewState extends State<LoginView> {
   }
 
   Future<void> _login() async {
-    if (emailController.text.isEmpty ||
-        passwordController.text.isEmpty) {
-      MySnackBar.show(
-        context,
-        message: "Fields cannot be empty",
-        background: Colors.red,
-      );
-      return;
-    }
+  if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+    MySnackBar.show(context, message: "Please fill all fields", background: Colors.red);
+    return;
+  }
 
-    try {
-      await authController.login(
-        emailController.text.trim(),
-        passwordController.text.trim(),
-      );
+  try {
+    await authController.login(
+      emailController.text.trim(),
+      passwordController.text.trim(),
+    );
 
+    if (mounted) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomeView()),
       );
-    } catch (e) {
+    }
+  } catch (e) {
+    if (mounted) {
       MySnackBar.show(
-        context,
-        message: "Invalid email or password",
-        background: Colors.red,
+        context, 
+        message: e.toString().replaceAll("Exception: ", ""), 
+        background: Colors.red
       );
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {

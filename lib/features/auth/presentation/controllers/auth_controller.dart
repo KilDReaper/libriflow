@@ -8,15 +8,12 @@ class AuthController extends ChangeNotifier {
 
   bool isLoading = false;
 
-  Future<String?> login(String email, String password) async {
+  Future<void> login(String email, String password) async {
     isLoading = true;
     notifyListeners();
 
     try {
       await repository.login(email, password);
-      return null;
-    } catch (e) {
-      return e.toString();
     } finally {
       isLoading = false;
       notifyListeners();

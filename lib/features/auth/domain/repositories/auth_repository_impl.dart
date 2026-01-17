@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:libriflow/features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:libriflow/features/auth/data/datasources/auth_remote_datasource.dart';
@@ -14,14 +15,30 @@ class AuthRepositoryImpl implements AuthRepository {
     final connectivityResult = await Connectivity().checkConnectivity();
 
     if (connectivityResult != ConnectivityResult.none) {
-      final token = await remote.login(email, password);
-      await local.saveToken(token);
-    } 
-    else {
-      final cachedToken = local.getToken();
-      if (cachedToken == null) {
-        throw Exception("Offline and no local session found. Please connect to internet.");
+      try {
+        final token = await remote.login(email, password);
+
+        await local.saveToken(token);
+      } on SocketException {
+        return _offlineFallback();
+      } catch (e) {
+
+        rethrow;
       }
+    } 
+
+    else {
+      return _offlineFallback();
+    }
+  }
+
+  Future<void> _offlineFallback() async {
+    final cachedToken = local.getToken();
+    if (cachedToken != null) {
+
+      return; 
+    } else {
+      throw Exception("No internet connection and no saved session found.");
     }
   }
 
@@ -33,16 +50,16 @@ class AuthRepositoryImpl implements AuthRepository {
       throw Exception("Cannot create account while offline.");
     }
     
-    await remote.signup(email, password, confirmPassword); //
+    await remote.signup(email, password, confirmPassword);
   }
 
   @override
   bool isLoggedIn() {
-    return local.getToken() != null; 
+    return local.getToken() != null;
   }
 
   @override
   void logout() {
-    local.clearToken(); 
+    local.clearToken();
   }
 }

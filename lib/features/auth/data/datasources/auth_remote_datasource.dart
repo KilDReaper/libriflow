@@ -22,27 +22,18 @@ class AuthRemoteDatasource {
   }
 
   Future<String> login(String email, String password) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/login'), // Corrected: /api/auth/login
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          "email": email,
-          "password": password,
-        }),
-      );
+  final response = await http.post(
+    Uri.parse('$baseUrl/auth/login'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({"email": email, "password": password}),
+  );
 
-      final data = jsonDecode(response.body);
+  final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200) {
-        // Updated to match your backend: { "success": true, "token": { "token": "..." } }
-        return data['token']['token']; 
-      } else {
-        final errorMessage = data['message'] ?? 'Login failed';
-        throw Exception(errorMessage);
-      }
-    } catch (e) {
-      throw Exception("Server Error: ${e.toString()}");
-    }
+  if (response.statusCode == 200) {
+    return data['token'];
+  } else {
+    throw Exception(data['message'] ?? 'Invalid credentials');
   }
+}
 }
