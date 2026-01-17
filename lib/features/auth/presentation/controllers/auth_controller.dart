@@ -8,24 +8,30 @@ class AuthController extends ChangeNotifier {
 
   bool isLoading = false;
 
-  Future<void> login(String email, String password) async {
+  Future<String?> login(String email, String password) async {
     isLoading = true;
     notifyListeners();
 
     try {
       await repository.login(email, password);
+      return null;
+    } catch (e) {
+      return e.toString();
     } finally {
       isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> signup(String email, String password) async {
+  Future<String?> signup(String email, String password, String confirmPassword) async {
     isLoading = true;
     notifyListeners();
 
     try {
-      await repository.signup(email, password);
+      await repository.signup(email, password, confirmPassword);
+      return null;
+    } catch (e) {
+      return e.toString();
     } finally {
       isLoading = false;
       notifyListeners();

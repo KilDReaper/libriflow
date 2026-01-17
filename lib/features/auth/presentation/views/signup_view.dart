@@ -7,7 +7,6 @@ import 'package:libriflow/widget/mybutton.dart';
 
 import '../../presentation/controllers/auth_controller.dart';
 import 'login_view.dart';
-
 import '../../data/datasources/auth_local_datasource.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
 
@@ -59,21 +58,13 @@ class _SignupViewState extends State<SignupView> {
       return;
     }
 
-    if (passwordController.text != confirmPasswordController.text) {
-      MySnackBar.show(
-        context,
-        message: "Passwords do not match",
-        background: Colors.red,
-      );
-      return;
-    }
+    final errorMessage = await authController.signup(
+      emailController.text.trim(),
+      passwordController.text.trim(),
+      confirmPasswordController.text.trim(),
+    );
 
-    try {
-      await authController.signup(
-        emailController.text.trim(),
-        passwordController.text.trim(),
-      );
-
+    if (errorMessage == null) {
       MySnackBar.show(
         context,
         message: "Account created successfully",
@@ -84,10 +75,10 @@ class _SignupViewState extends State<SignupView> {
         context,
         MaterialPageRoute(builder: (_) => const LoginView()),
       );
-    } catch (e) {
+    } else {
       MySnackBar.show(
         context,
-        message: "Signup failed. Try again.",
+        message: errorMessage,
         background: Colors.red,
       );
     }
