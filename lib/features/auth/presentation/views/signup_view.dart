@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:libriflow/common/mysnackbar.dart';
+import 'package:libriflow/shared/utils/mysnackbar.dart';
 import 'package:libriflow/features/auth/domain/repositories/auth_repository_impl.dart';
-import 'package:libriflow/widget/my_textformfeild.dart';
-import 'package:libriflow/widget/mybutton.dart';
+import 'package:libriflow/shared/widgets/my_textformfeild.dart';
+import 'package:libriflow/shared/widgets/mybutton.dart';
 
 import '../../presentation/controllers/auth_controller.dart';
 import 'login_view.dart';

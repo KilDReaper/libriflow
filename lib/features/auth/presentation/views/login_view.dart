@@ -1,12 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:libriflow/common/mysnackbar.dart';
+import 'package:libriflow/shared/utils/mysnackbar.dart';
 import 'package:libriflow/features/auth/domain/repositories/auth_repository_impl.dart';
-import 'package:libriflow/widget/my_textformfeild.dart';
-import 'package:libriflow/widget/mybutton.dart';
+import 'package:libriflow/shared/widgets/my_textformfeild.dart';
+import 'package:libriflow/shared/widgets/mybutton.dart';
+import 'package:libriflow/core/permissions/permission_service.dart';
 
 import '../../presentation/controllers/auth_controller.dart';
-import '../../../home/presentation/views/home_view.dart';
+import '../../home/presentation/views/home_view.dart';
 import 'signup_view.dart';
 
 import '../../data/datasources/auth_local_datasource.dart';
@@ -46,33 +49,46 @@ class _LoginViewState extends State<LoginView> {
   }
 
   Future<void> _login() async {
-  if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-    MySnackBar.show(context, message: "Please fill all fields", background: Colors.red);
-    return;
-  }
-
-  try {
-    await authController.login(
-      emailController.text.trim(),
-      passwordController.text.trim(),
-    );
-
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeView()),
-      );
+    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+      MySnackBar.show(context, message: "Please fill all fields", background: Colors.red);
+      return;
     }
-  } catch (e) {
-    if (mounted) {
-      MySnackBar.show(
-        context, 
-        message: e.toString().replaceAll("Exception: ", ""), 
-        background: Colors.red
+
+    try {
+      await authController.login(
+        emailController.text.trim(),
+        passwordController.text.trim(),
       );
+
+      final permissionGranted = await PermissionService().requestCameraPermission();
+
+      if (!permissionGranted) {
+        if (mounted) {
+          MySnackBar.show(
+            context,
+            message: "Camera permission is required",
+            background: Colors.red,
+          );
+        }
+        return;
+      }
+
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeView()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        MySnackBar.show(
+          context,
+          message: e.toString().replaceAll("Exception: ", ""),
+          background: Colors.red,
+        );
+      }
     }
   }
-}
 
   @override
   Widget build(BuildContext context) {

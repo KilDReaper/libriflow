@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '/common/mysnackbar.dart';
+import '../../../../../shared/utils/mysnackbar.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
