@@ -6,7 +6,7 @@ class MySnackBar {
     required String message,
     Color background = Colors.green,
     Color textColor = Colors.white,
-    int durationSeconds = 2,
+    int durationSeconds = 10,
   }) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

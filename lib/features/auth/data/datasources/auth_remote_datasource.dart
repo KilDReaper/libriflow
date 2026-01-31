@@ -1,39 +1,47 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+// lib/features/auth/data/datasources/auth_remote_datasource.dart
+import '../models/auth_user_model.dart';
+import '../../../../core/network/api_client.dart';
 
-class AuthRemoteDatasource {
-  final String baseUrl = "http://10.0.2.2:5000/api";
-
-  Future<void> signup(String email, String password, String confirmPassword) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/auth/register'), 
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        "email": email,
-        "password": password,
-        "confirmPassword": confirmPassword,
-      }),
-    );
-
-    final data = jsonDecode(response.body);
-    if (response.statusCode != 201) {
-      throw Exception(data['message'] ?? 'Signup failed');
-    }
-  }
-
-  Future<String> login(String email, String password) async {
-  final response = await http.post(
-    Uri.parse('$baseUrl/auth/login'),
-    headers: {'Content-Type': 'application/json'},
-    body: jsonEncode({"email": email, "password": password}),
+abstract class AuthRemoteDatasource {
+  Future<AuthUserModel> login(String email, String password);
+  Future<AuthUserModel> signup(
+    String email,
+    String username,
+    String phone,
+    String password,
+    String confirmPassword,
   );
-
-  final data = jsonDecode(response.body);
-
-  if (response.statusCode == 200) {
-    return data['token'];
-  } else {
-    throw Exception(data['message'] ?? 'Invalid credentials');
-  }
 }
+
+class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
+  final ApiClient client;
+
+  AuthRemoteDatasourceImpl([ApiClient? client]) : client = client ?? ApiClient();
+
+  @override
+  Future<AuthUserModel> login(String email, String password) async {
+    final response = await client.post('/auth/login', {
+      'email': email,
+      'password': password,
+    });
+    return AuthUserModel.fromJson(response.data['data']);
+  }
+
+  @override
+  Future<AuthUserModel> signup(
+    String email,
+    String username,
+    String phone,
+    String password,
+    String confirmPassword,
+  ) async {
+    final response = await client.post('/auth/register', {
+      'email': email,
+      'username': username,
+      'phone': phone,
+      'password': password,
+      'confirmPassword': confirmPassword,
+    });
+    return AuthUserModel.fromJson(response.data['data']);
+  }
 }
