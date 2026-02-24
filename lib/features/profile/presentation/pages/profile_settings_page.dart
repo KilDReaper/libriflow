@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import 'package:hive/hive.dart';
 import 'package:libriflow/features/auth/presentation/views/login_page.dart';
-import '../bloc/profile_bloc.dart';
-import '../bloc/profile_event.dart';
-import '../bloc/profile_state.dart';
-import '../../../../core/network/api_client.dart';
+import 'package:libriflow/features/profile/presentation/providers/profile_provider.dart';
+import 'package:libriflow/features/auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/user.dart';
 
 class ProfileSettingsPage extends StatefulWidget {
@@ -25,7 +22,6 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
   final _confirmPasswordController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   XFile? _selectedImage;
-  bool _isUploading = false;
   User? _lastUser;
 
   void _initializeControllers(User user) {
@@ -38,9 +34,8 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     if (image != null && mounted) {
       setState(() {
         _selectedImage = image;
-        _isUploading = true;
       });
-      context.read<ProfileBloc>().add(UploadProfileImageEvent(image.path));
+      context.read<ProfileProvider>().uploadImage(image.path);
     }
   }
 
@@ -78,9 +73,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
   }
 
   void _logout() async {
-    final authBox = await Hive.openBox('auth');
-    await authBox.clear();
-    ApiClient().setToken('');
+    await context.read<AuthProvider>().logout();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => const LoginView()),
@@ -92,7 +85,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProfileBloc>().add(GetProfileEvent());
+      context.read<ProfileProvider>().fetchProfile();
     });
   }
 
@@ -101,129 +94,445 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile Settings'),
-        actions: [IconButton(icon: const Icon(Icons.logout), onPressed: _logout)],
+        elevation: 0,
+        backgroundColor: const Color(0xFF1A73E8),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _logout,
+            tooltip: 'Logout',
+          )
+        ],
       ),
-      body: BlocConsumer<ProfileBloc, ProfileState>(
-        listener: (context, state) {
-          if (state is ProfileLoaded || state is ProfileUpdated) {
-            final user = (state is ProfileLoaded) ? state.user : (state as ProfileUpdated).user;
-
-            setState(() {
-              _lastUser = user;
-              _isUploading = false;
-              // Keep _selectedImage if backend URL not ready
-            });
-
-            if (state is ProfileUpdated) {
+      backgroundColor: Colors.grey.shade50,
+      body: Consumer<ProfileProvider>(
+        builder: (context, profileProvider, child) {
+          // Handle success/error messages
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (profileProvider.successMessage != null) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Update Successful')),
+                SnackBar(
+                  content: Text(profileProvider.successMessage!),
+                  backgroundColor: Colors.green,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
               );
-              // Refresh profile from backend
-              context.read<ProfileBloc>().add(GetProfileEvent());
+              profileProvider.clearMessages();
             }
-          } else if (state is ProfileError) {
-            setState(() => _isUploading = false);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
+            if (profileProvider.errorMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(profileProvider.errorMessage!),
+                  backgroundColor: Colors.red,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              );
+              profileProvider.clearMessages();
+            }
+          });
+
+          if (profileProvider.status == ProfileStatus.initial ||
+              profileProvider.status == ProfileStatus.loading) {
+            return const Center(
+              child: CircularProgressIndicator(),
             );
           }
-        },
-        builder: (context, state) {
-          if (state is ProfileInitial) {
-            return const Center(child: CircularProgressIndicator());
+
+          if (profileProvider.status == ProfileStatus.error) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 80,
+                    color: Colors.red.shade300,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    profileProvider.errorMessage ?? 'Error loading profile',
+                    style: TextStyle(
+                      color: Colors.red.shade600,
+                      fontSize: 16,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      context.read<ProfileProvider>().fetchProfile();
+                    },
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1A73E8),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
           }
 
-          User? user = _lastUser;
-          if (state is ProfileLoaded || state is ProfileUpdated) {
-            user = (state is ProfileLoaded) ? state.user : (state as ProfileUpdated).user;
-            _initializeControllers(user);
-            _lastUser = user;
-          }
+          User? user = profileProvider.user ?? _lastUser;
 
           if (user == null) {
             return const Center(child: Text('Error loading profile'));
           }
 
+          _initializeControllers(user);
+          _lastUser = user;
+
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(vertical: 16),
             child: Form(
               key: _formKey,
               child: Column(
                 children: [
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundImage: (_selectedImage != null)
-                            ? FileImage(File(_selectedImage!.path))
-                            : (user.avatarUrl != null &&
-                                    user.avatarUrl!.isNotEmpty)
-                                ? NetworkImage(user.avatarUrl!)
-                                : const AssetImage('assets/images/Logo.png')
-                                    as ImageProvider,
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: CircleAvatar(
-                          radius: 18,
-                          child: IconButton(
-                            icon: const Icon(Icons.camera_alt, size: 18),
-                            onPressed: _showImageSourceActionSheet,
+                  // Profile Picture Section
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.shade200,
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFF1A73E8),
+                                  width: 3,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF1A73E8)
+                                        .withOpacity(0.2),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: CircleAvatar(
+                                radius: 58,
+                                backgroundImage: (_selectedImage != null)
+                                    ? FileImage(File(_selectedImage!.path))
+                                    : (user.avatarUrl != null &&
+                                            user.avatarUrl!.isNotEmpty)
+                                        ? NetworkImage(user.avatarUrl!)
+                                        : const AssetImage(
+                                            'assets/images/Logo.png')
+                                            as ImageProvider,
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1A73E8),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF1A73E8)
+                                          .withOpacity(0.4),
+                                      blurRadius: 8,
+                                    ),
+                                  ],
+                                ),
+                                child: GestureDetector(
+                                  onTap: _showImageSourceActionSheet,
+                                  child: const Icon(
+                                    Icons.camera_alt,
+                                    size: 20,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (profileProvider.isUploading)
+                              Positioned.fill(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.black.withOpacity(0.4),
+                                  ),
+                                  child: const Center(
+                                    child: CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          user.name,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
                           ),
                         ),
-                      ),
-                      if (_isUploading)
-                        Positioned.fill(
-                          child: Container(
-                            color: Colors.black.withOpacity(0.4),
-                            child: const Center(child: CircularProgressIndicator()),
+                        const SizedBox(height: 4),
+                        Text(
+                          user.email,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
                           ),
                         ),
-                    ],
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 20),
-                  TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(labelText: 'Username')),
-                  TextFormField(
-                      controller: _emailController,
-                      decoration: const InputDecoration(labelText: 'Email')),
-                  const Divider(height: 40),
-                  TextFormField(
-                    controller: _passwordController,
-                    decoration: const InputDecoration(labelText: 'New Password'),
-                    obscureText: true,
+                  const SizedBox(height: 24),
+                  // Personal Information Section
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.shade200,
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Personal Information',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildTextField(
+                          controller: _nameController!,
+                          label: 'Username',
+                          icon: Icons.person_outline,
+                          hint: 'Enter your name',
+                        ),
+                        const SizedBox(height: 12),
+                        _buildTextField(
+                          controller: _emailController!,
+                          label: 'Email',
+                          icon: Icons.email_outlined,
+                          hint: 'Enter your email',
+                        ),
+                      ],
+                    ),
                   ),
-                  TextFormField(
-                    controller: _confirmPasswordController,
-                    decoration:
-                        const InputDecoration(labelText: 'Confirm Password'),
-                    obscureText: true,
+                  const SizedBox(height: 24),
+                  // Security Section
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.shade200,
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.lock_outline,
+                              color: Colors.orange.shade600,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Change Password (Optional)',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade800,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Leave blank if you don\'t want to change your password',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade500,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildTextField(
+                          controller: _passwordController,
+                          label: 'New Password',
+                          icon: Icons.lock_outline,
+                          hint: 'Enter new password',
+                          isPassword: true,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildTextField(
+                          controller: _confirmPasswordController,
+                          label: 'Confirm Password',
+                          icon: Icons.lock_outline,
+                          hint: 'Confirm new password',
+                          isPassword: true,
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      context.read<ProfileBloc>().add(UpdateProfileEvent(
-                            name: _nameController!.text,
-                            email: _emailController!.text,
-                            password: _passwordController.text.isEmpty
-                                ? null
-                                : _passwordController.text,
-                            confirmPassword:
-                                _confirmPasswordController.text.isEmpty
+                  const SizedBox(height: 24),
+                  // Save Button
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    width: double.infinity,
+                    child: profileProvider.status == ProfileStatus.updating
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1A73E8),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Center(
+                              child: SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 3,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                        : ElevatedButton.icon(
+                            onPressed: () {
+                              context.read<ProfileProvider>().updateUserProfile(
+                                name: _nameController!.text,
+                                email: _emailController!.text,
+                                password: _passwordController.text.isEmpty
                                     ? null
-                                    : _confirmPasswordController.text,
-                          ));
-                    },
-                    child: const Text('Save Changes'),
+                                    : _passwordController.text,
+                                confirmPassword:
+                                    _confirmPasswordController.text.isEmpty
+                                        ? null
+                                        : _confirmPasswordController.text,
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF1A73E8),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 4,
+                            ),
+                            icon: const Icon(Icons.save),
+                            label: const Text(
+                              'Save Changes',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                   ),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    required String hint,
+    bool isPassword = false,
+  }) {
+    return TextFormField(
+      controller: controller,
+      obscureText: isPassword,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.grey.shade400),
+        prefixIcon: Icon(icon, color: const Color(0xFF1A73E8)),
+        labelStyle: const TextStyle(
+          color: Color(0xFF1A73E8),
+          fontWeight: FontWeight.w600,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: Color(0xFF1A73E8),
+            width: 2,
+          ),
+        ),
+        filled: true,
+        fillColor: Colors.grey.shade50,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
     );
   }
