@@ -5,7 +5,15 @@ class GetRecommendations {
   final RecommendationRepository repository;
   GetRecommendations(this.repository);
 
-  Future<List<Recommendation>> call() {
-    return repository.getRecommendations();
+  Future<List<Recommendation>> call({
+    bool trending = false,
+    String? genre,
+    String? similarToBookId,
+  }) {
+    return repository.getRecommendations(
+      trending: trending,
+      genre: genre,
+      similarToBookId: similarToBookId,
+    );
   }
 }

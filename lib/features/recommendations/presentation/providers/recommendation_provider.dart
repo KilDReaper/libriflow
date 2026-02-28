@@ -20,13 +20,21 @@ class RecommendationProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isLoading => _status == RecommendationStatus.loading;
 
-  Future<void> fetchRecommendations() async {
+  Future<void> fetchRecommendations({
+    bool trending = false,
+    String? genre,
+    String? similarToBookId,
+  }) async {
     _status = RecommendationStatus.loading;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      _items = await getRecommendations();
+      _items = await getRecommendations(
+        trending: trending,
+        genre: genre,
+        similarToBookId: similarToBookId,
+      );
       _status = RecommendationStatus.success;
       notifyListeners();
     } catch (e) {

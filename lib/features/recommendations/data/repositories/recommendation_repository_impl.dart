@@ -13,9 +13,17 @@ class RecommendationRepositoryImpl implements RecommendationRepository {
   });
 
   @override
-  Future<List<Recommendation>> getRecommendations() async {
+  Future<List<Recommendation>> getRecommendations({
+    bool trending = false,
+    String? genre,
+    String? similarToBookId,
+  }) async {
     try {
-      final models = await remote.getRecommendations();
+      final models = await remote.getRecommendations(
+        trending: trending,
+        genre: genre,
+        similarToBookId: similarToBookId,
+      );
       await local.cacheRecommendations(models);
       return models;
     } catch (e) {

@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import '../../../../services/remote_book_service.dart';
 import '../../../recommendations/presentation/pages/recommended_books_page.dart';
 import 'book_details_page.dart';
 
@@ -10,46 +13,82 @@ class SearchView extends StatefulWidget {
 }
 
 class _SearchViewState extends State<SearchView> {
+  final RemoteBookService _bookService = RemoteBookService();
   final TextEditingController searchController = TextEditingController();
+  Timer? _debounce;
   String searchText = "";
+  String selectedCategory = 'All';
+  bool isLoading = false;
+  String? errorMessage;
+  List<Map<String, dynamic>> books = [];
 
-  final List<String> categories = [
-    "Fiction",
-    "Sci-Fi",
-    "Romance",
-    "Programming",
-    "History",
-    "Horror",
-  ];
+  List<String> categories = ['All'];
 
-  final List<Map<String, dynamic>> books = [
-    {
-      "id": "flutter-for-beginners",
-      "title": "Flutter for Beginners",
-      "author": "John Adams",
-      "image":
-          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ855e1EnC0jUgGQbFetgA1Kvwog6HQf2lfkA&s"
-    },
-    {
-      "id": "data-structures-python",
-      "title": "Data Structures in Python",
-      "author": "Emily Clark",
-      "image": "https://picsum.photos/200"
-    },
-    {
-      "id": "silent-patient",
-      "title": "The Silent Patient",
-      "author": "Alex Michaelides",
-      "image":
-          "https://static.wixstatic.com/media/b077d4_c764f44d42d840a29ae3ea49155d50de~mv2.jpg"
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _searchBooks();
+  }
 
-  List<Map<String, dynamic>> get filteredBooks {
-    return books
-        .where((b) =>
-            b["title"].toLowerCase().contains(searchText.toLowerCase()))
-        .toList();
+  Future<void> _searchBooks() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      final fetchedBooks = await _bookService.getBooks(
+        search: searchText.trim().isEmpty ? null : searchText,
+        category: selectedCategory,
+      );
+
+      final fetchedCategories = fetchedBooks
+          .map((book) => (book['section'] ?? 'General').toString())
+          .where((section) => section.isNotEmpty)
+          .toSet()
+          .toList()
+        ..sort();
+
+      if (!mounted) return;
+      setState(() {
+        books = fetchedBooks;
+        categories = ['All', ...fetchedCategories];
+        isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        books = [];
+        categories = ['All'];
+        isLoading = false;
+        errorMessage = null;
+      });
+    }
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() {
+      searchText = value;
+    });
+
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 450), () {
+      _searchBooks();
+    });
+  }
+
+  void _searchByCategory(String category) {
+    setState(() {
+      selectedCategory = category;
+    });
+    _searchBooks();
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -67,7 +106,11 @@ class _SearchViewState extends State<SearchView> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const RecommendedBooksPage(),
+                  builder: (context) => const RecommendedBooksPage(
+                    bookType: '',
+                    course: '',
+                    className: '',
+                  ),
                 ),
               );
             },
@@ -87,21 +130,19 @@ class _SearchViewState extends State<SearchView> {
               ),
               child: TextField(
                 controller: searchController,
-                onChanged: (v) {
-                  setState(() {
-                    searchText = v;
-                  });
-                },
+                onChanged: _onSearchChanged,
                 decoration: InputDecoration(
                   hintText: "Search books...",
                   border: InputBorder.none,
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.clear),
                     onPressed: () {
+                      _debounce?.cancel();
                       searchController.clear();
                       setState(() {
                         searchText = "";
                       });
+                      _searchBooks();
                     },
                   ),
                 ),
@@ -119,9 +160,10 @@ class _SearchViewState extends State<SearchView> {
                     .map(
                       (c) => Padding(
                         padding: const EdgeInsets.only(right: 8),
-                        child: Chip(
+                        child: ActionChip(
                           label: Text(c),
                           backgroundColor: Colors.blue.shade50,
+                          onPressed: () => _searchByCategory(c),
                         ),
                       ),
                     )
@@ -133,91 +175,137 @@ class _SearchViewState extends State<SearchView> {
 
             // Books Grid
             Expanded(
-              child: searchText.isEmpty
-                  ? const Center(
-                      child: Text(
-                        "Search any book to begin",
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    )
-                  : GridView.builder(
-                      itemCount: filteredBooks.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.65,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                      ),
-                      itemBuilder: (context, index) {
-                        final book = filteredBooks[index];
-                        return InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => BookDetailsPage(
-                                  bookId: book["id"].toString(),
-                                  title: book["title"].toString(),
-                                  author: book["author"].toString(),
-                                  image: book["image"].toString(),
-                                  section: "General",
-                                  price: 0,
-                                ),
-                              ),
-                            );
-                          },
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              color: Colors.white,
-                              boxShadow: [
-                                BoxShadow(
-                                  blurRadius: 5,
-                                  spreadRadius: 1,
-                                  color: Colors.black.withOpacity(0.05),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.network(
-                                    book["image"],
-                                    height: 180,
-                                    width: double.infinity,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  book["title"],
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  book["author"],
-                                  style: TextStyle(
-                                    color: Colors.grey.shade600,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+              child: _buildBodyContent(),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBodyContent() {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (errorMessage != null) {
+      return Center(
+        child: Text(
+          errorMessage!,
+          style: const TextStyle(fontSize: 14),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+
+    if (books.isEmpty) {
+      return Center(
+        child: Text(
+          searchText.trim().isEmpty
+              ? 'No books available in your database yet'
+              : 'No books found',
+          style: const TextStyle(fontSize: 16),
+        ),
+      );
+    }
+
+    return GridView.builder(
+      itemCount: books.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.65,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemBuilder: (context, index) {
+        final book = books[index];
+        return InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => BookDetailsPage(
+                  bookId: book['id'].toString(),
+                  title: book['title'].toString(),
+                  author: book['author'].toString(),
+                  image: book['image'].toString(),
+                  section: book['section'].toString(),
+                  price: (book['price'] as num?)?.toInt() ?? 0,
+                ),
+              ),
+            );
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  blurRadius: 5,
+                  spreadRadius: 1,
+                  color: Colors.black.withOpacity(0.05),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: _buildBookImage(book['image'].toString()),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  book['title'].toString(),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  book['author'].toString(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBookImage(String imageUrl) {
+    if (imageUrl.isEmpty) {
+      return Container(
+        height: 180,
+        width: double.infinity,
+        color: Colors.grey.shade200,
+        child: const Icon(Icons.menu_book, size: 40),
+      );
+    }
+
+    return Image.network(
+      imageUrl,
+      height: 180,
+      width: double.infinity,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          height: 180,
+          width: double.infinity,
+          color: Colors.grey.shade200,
+          child: const Icon(Icons.menu_book, size: 40),
+        );
+      },
     );
   }
 }

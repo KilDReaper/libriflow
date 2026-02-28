@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:provider/provider.dart';
+import '../providers/scanner_provider.dart';
 
 class QRScannerPage extends StatefulWidget {
   const QRScannerPage({super.key});
@@ -14,6 +16,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
   );
 
   bool isScanned = false;
+  bool isProcessing = false;
 
   @override
   void dispose() {
@@ -22,7 +25,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
   }
 
   void _handleBarcode(BarcodeCapture barcodes) {
-    if (isScanned) return;
+    if (isScanned || isProcessing) return;
     
     if (barcodes.barcodes.isNotEmpty) {
       final barcode = barcodes.barcodes.first;
@@ -33,33 +36,55 @@ class _QRScannerPageState extends State<QRScannerPage> {
           isScanned = true;
         });
 
-        // Show dialog with scanned result
-        _showResultDialog(code, barcode.format);
+        // Process the barcode with backend
+        _processScan(code, barcode.format);
       }
     }
   }
 
-  void _showResultDialog(String code, BarcodeFormat format) {
+  Future<void> _processScan(String code, BarcodeFormat format) async {
+    setState(() => isProcessing = true);
+    
+    final scannerProvider = context.read<ScannerProvider>();
+    final result = await scannerProvider.borrowByQRCode(code);
+
+    if (!mounted) return;
+
+    setState(() => isProcessing = false);
+
+    if (result != null) {
+      // Success - show result dialog
+      _showSuccessDialog(result);
+    } else {
+      // Error - show error dialog
+      _showErrorDialog(scannerProvider.error ?? 'Failed to process scan');
+    }
+  }
+
+  void _showSuccessDialog(Map<String, dynamic> result) {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text('Book Scanned!'),
+        title: const Text('Book Issued Successfully!', style: TextStyle(color: Colors.green)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Format: ${format.name.toUpperCase()}',
+              'Book: ${result['book']?['title'] ?? 'Unknown'}',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Text('Code: $code'),
-            const SizedBox(height: 16),
-            const Text(
-              'What would you like to do with this book?',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+            Text(
+              'Due Date: ${result['dueDate']?.toString().split(' ')[0] ?? 'N/A'}',
             ),
+            const SizedBox(height: 8),
+            if (result['borrowingId'] != null)
+              Text(
+                'Borrowing ID: ${result['borrowingId']}',
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
           ],
         ),
         actions: [
@@ -70,19 +95,37 @@ class _QRScannerPageState extends State<QRScannerPage> {
                 isScanned = false;
               });
             },
-            child: const Text('Scan Again'),
+            child: const Text('Scan Another'),
           ),
-          FilledButton.icon(
+          ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              Navigator.pop(context, {
-                'code': code,
-                'format': format.name,
-                'action': 'borrow',
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            child: const Text('Done'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String errorMessage) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Error', style: TextStyle(color: Colors.red)),
+        content: Text(errorMessage),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                isScanned = false;
               });
             },
-            icon: const Icon(Icons.book, size: 18),
-            label: const Text('Borrow Book'),
+            child: const Text('Try Again'),
           ),
         ],
       ),
@@ -122,6 +165,29 @@ class _QRScannerPageState extends State<QRScannerPage> {
             painter: ScannerOverlay(),
             child: Container(),
           ),
+          
+          // Processing indicator
+          if (isProcessing)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black54,
+                child: const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation(Colors.white),
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'Processing...',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           
           // Instructions
           Positioned(

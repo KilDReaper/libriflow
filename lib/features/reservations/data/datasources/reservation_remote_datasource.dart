@@ -16,7 +16,9 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
 
   @override
   Future<List<ReservationModel>> getMyReservations() async {
-    final response = await client.get('reservations/me');
+    final authHeader = client.getAuthHeader();
+    print('DEBUG: Fetching reservations with Authorization header: $authHeader');
+    final response = await client.get('reservations/my');
     final data = response.data;
     final List<dynamic> items = _extractList(data, 'reservations');
     return items
@@ -29,6 +31,7 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
     required String bookId,
     required String bookTitle,
   }) async {
+    print('DEBUG: Creating reservation with bookId: $bookId, bookTitle: $bookTitle');
     final response = await client.post('reservations', {
       'bookId': bookId,
       'bookTitle': bookTitle,
@@ -41,7 +44,7 @@ class ReservationRemoteDataSourceImpl implements ReservationRemoteDataSource {
   @override
   Future<void> cancelReservation(String reservationId) async {
     try {
-      await client.delete('reservations/$reservationId');
+      await client.patch('reservations/$reservationId/cancel', null);
     } on DioException catch (e) {
       throw Exception(e.response?.data['message'] ?? 'Cancel failed');
     }

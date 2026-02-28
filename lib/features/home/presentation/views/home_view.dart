@@ -4,7 +4,7 @@ import 'package:libriflow/features/home/presentation/providers/home_provider.dar
 import 'package:libriflow/features/profile/presentation/pages/profile_settings_page.dart';
 import 'package:libriflow/features/scanner/presentation/pages/qr_scanner_page.dart';
 import 'package:libriflow/shared/utils/mysnackbar.dart';
-import 'dashboard_view.dart';
+import 'enhanced_dashboard_view.dart';
 import 'search_view.dart';
 import 'library_view.dart';
 
@@ -34,7 +34,7 @@ class HomeView extends StatelessWidget {
           return IndexedStack(
             index: homeProvider.currentIndex,
             children: const [
-              DashboardView(),
+              EnhancedDashboardView(),
               SearchView(),
               LibraryView(),
               ProfileSettingsPage(),

@@ -31,6 +31,19 @@ import 'package:libriflow/features/recommendations/data/datasources/recommendati
 import 'package:libriflow/features/recommendations/data/repositories/recommendation_repository_impl.dart';
 import 'package:libriflow/features/recommendations/domain/usecases/get_recommendations.dart';
 import 'package:libriflow/features/recommendations/presentation/providers/recommendation_provider.dart';
+import 'package:libriflow/features/borrowings/data/datasources/borrowing_remote_datasource.dart';
+import 'package:libriflow/features/borrowings/data/repositories/borrowing_repository_impl.dart';
+import 'package:libriflow/features/borrowings/domain/usecases/borrowing_usecases.dart';
+import 'package:libriflow/features/borrowings/presentation/providers/borrowing_provider.dart';
+import 'package:libriflow/features/payments/data/datasources/payment_remote_datasource.dart';
+import 'package:libriflow/features/payments/data/repositories/payment_repository_impl.dart';
+import 'package:libriflow/features/payments/domain/usecases/payment_usecases.dart';
+import 'package:libriflow/features/payments/presentation/providers/payment_provider.dart';
+import 'package:libriflow/features/scanner/data/datasources/scanner_remote_datasource.dart';
+import 'package:libriflow/features/scanner/data/repositories/scanner_repository_impl.dart';
+import 'package:libriflow/features/scanner/domain/usecases/borrow_by_qr_code.dart';
+import 'package:libriflow/features/scanner/presentation/providers/scanner_provider.dart';
+import 'package:libriflow/features/admin/presentation/providers/admin_books_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +51,7 @@ void main() async {
   final authBox = await Hive.openBox('auth');
   final homeBox = await Hive.openBox('home_settings');
   final recommendationBox = await Hive.openBox('recommendations');
+  await Hive.openBox('books'); // Initialize books box
 
   final apiClient = ApiClient();
   final String? savedToken = authBox.get('token');
@@ -90,6 +104,18 @@ class MyApp extends StatelessWidget {
       local: RecommendationLocalDataSourceImpl(recommendationBox),
     );
 
+    final borrowingRepository = BorrowingRepositoryImpl(
+      remoteDataSource: BorrowingRemoteDataSourceImpl(),
+    );
+
+    final paymentRepository = PaymentRepositoryImpl(
+      remoteDataSource: PaymentRemoteDataSourceImpl(),
+    );
+
+    final scannerRepository = ScannerRepositoryImpl(
+      remoteDataSource: ScannerRemoteDataSourceImpl(),
+    );
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
@@ -123,6 +149,32 @@ class MyApp extends StatelessWidget {
           create: (context) => RecommendationProvider(
             getRecommendations: GetRecommendations(recommendationRepository),
           ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => BorrowingProvider(
+            getMyBorrowingsUseCase: GetMyBorrowingsUseCase(repository: borrowingRepository),
+            getActiveBorrowingsUseCase: GetActiveBorrowingsUseCase(repository: borrowingRepository),
+            getBorrowingDetailsUseCase: GetBorrowingDetailsUseCase(repository: borrowingRepository),
+            returnBorrowingUseCase: ReturnBorrowingUseCase(repository: borrowingRepository),
+            getBorrowingStatsUseCase: GetBorrowingStatsUseCase(repository: borrowingRepository),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => PaymentProvider(
+            getMyPaymentsUseCase: GetMyPaymentsUseCase(repository: paymentRepository),
+            getUnpaidFinesUseCase: GetUnpaidFinesUseCase(repository: paymentRepository),
+            createPaymentUseCase: CreatePaymentUseCase(repository: paymentRepository),
+            verifyPaymentUseCase: VerifyPaymentUseCase(repository: paymentRepository),
+            getPaymentDetailsUseCase: GetPaymentDetailsUseCase(repository: paymentRepository),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => ScannerProvider(
+            borrowByQRCodeUseCase: BorrowByQRCodeUseCase(repository: scannerRepository),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => AdminBooksProvider(),
         ),
       ],
       child: MaterialApp(

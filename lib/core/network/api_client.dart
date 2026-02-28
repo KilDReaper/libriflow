@@ -1,12 +1,15 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 class ApiClient {
   final Dio _dio;
 
+  static const String _envBaseUrl = String.fromEnvironment('API_BASE_URL');
+
   ApiClient._internal()
       : _dio = Dio(
           BaseOptions(
-            baseUrl: 'http://10.0.2.2:5000/api/',
+            baseUrl: _resolveBaseUrl(),
             connectTimeout: const Duration(seconds: 30),
             receiveTimeout: const Duration(seconds: 30),
             headers: {
@@ -75,6 +78,14 @@ class ApiClient {
     }
   }
 
+  Future<Response> patch(String path, Map<String, dynamic>? body) async {
+    try {
+      return await _dio.patch(path, data: body);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
   Future<Response> delete(String path) async {
     try {
       return await _dio.delete(path);
@@ -89,6 +100,33 @@ class ApiClient {
 
   void clearToken() {
     _dio.options.headers.remove('Authorization');
+  }
+
+  String? getAuthHeader() {
+    return _dio.options.headers['Authorization'] as String?;
+  }
+
+  static String _resolveBaseUrl() {
+    if (_envBaseUrl.trim().isNotEmpty) {
+      final url = _envBaseUrl.trim();
+      return url.endsWith('/') ? url : '$url/';
+    }
+
+    if (kIsWeb) {
+      return 'http://localhost:5000/api/';
+    }
+
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return 'http://10.0.2.2:5000/api/';
+      case TargetPlatform.iOS:
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+      case TargetPlatform.linux:
+        return 'http://localhost:5000/api/';
+      default:
+        return 'http://localhost:5000/api/';
+    }
   }
 
   Exception _handleDioError(DioException error) {

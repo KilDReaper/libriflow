@@ -401,7 +401,7 @@ class ProfileView extends StatelessWidget {
         trailing: Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: const Color(0xFF1A73E8),
+          activeThumbColor: const Color(0xFF1A73E8),
         ),
       ),
     );

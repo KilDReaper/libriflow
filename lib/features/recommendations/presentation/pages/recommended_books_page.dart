@@ -7,7 +7,16 @@ import '../../domain/entities/recommendation.dart';
 import '../providers/recommendation_provider.dart';
 
 class RecommendedBooksPage extends StatefulWidget {
-  const RecommendedBooksPage({super.key});
+  final String bookType;
+  final String course;
+  final String className;
+
+  const RecommendedBooksPage({
+    super.key,
+    required this.bookType,
+    required this.course,
+    required this.className,
+  });
 
   @override
   State<RecommendedBooksPage> createState() => _RecommendedBooksPageState();
@@ -51,7 +60,7 @@ class _RecommendedBooksPageState extends State<RecommendedBooksPage> {
 
           if (provider.status == RecommendationStatus.error) {
             return _ErrorState(
-              onRetry: provider.fetchRecommendations,
+              onRetry: () => provider.fetchRecommendations(),
             );
           }
 
@@ -60,7 +69,7 @@ class _RecommendedBooksPageState extends State<RecommendedBooksPage> {
           }
 
           return RefreshIndicator(
-            onRefresh: provider.fetchRecommendations,
+            onRefresh: () => provider.fetchRecommendations(),
             child: GridView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: provider.items.length,

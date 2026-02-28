@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../../../services/book_service.dart';
+import '../../data/models/book_model.dart';
 import '../../../reservations/presentation/pages/my_reservations_page.dart';
 
 class LibraryView extends StatefulWidget {
@@ -12,58 +15,38 @@ class _LibraryViewState extends State<LibraryView>
     with SingleTickerProviderStateMixin {
   late TabController tabController;
 
-  final List<Map<String, dynamic>> rentedBooks = [
-    {
-      "title": "The Art of War",
-      "image": "https://picsum.photos/200?random=1",
-      "author": "Sun Tzu",
-      "daysLeft": 12,
-      "totalDays": 30
-    },
-    {
-      "title": "Atomic Habits",
-      "image": "https://picsum.photos/200?random=2",
-      "author": "James Clear",
-      "daysLeft": 5,
-      "totalDays": 21
-    },
-    {
-      "title": "Deep Work",
-      "image": "https://picsum.photos/200?random=3",
-      "author": "Cal Newport",
-      "daysLeft": 20,
-      "totalDays": 30
-    },
-  ];
-
-  final List<Map<String, dynamic>> purchasedBooks = [
-    {
-      "title": "Harry Potter",
-      "image": "https://picsum.photos/200?random=4",
-      "author": "J.K. Rowling",
-      "purchaseDate": "Jan 15, 2024"
-    },
-    {
-      "title": "Rich Dad Poor Dad",
-      "image": "https://picsum.photos/200?random=5",
-      "author": "Robert Kiyosaki",
-      "purchaseDate": "Feb 3, 2024"
-    },
-    {
-      "title": "The Hobbit",
-      "image": "https://picsum.photos/200?random=6",
-      "author": "J.R.R. Tolkien",
-      "purchaseDate": "Dec 20, 2023"
-    },
-  ];
+  List<BookModel> rentedBooks = [];
+  List<BookModel> purchasedBooks = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
     tabController = TabController(length: 2, vsync: this);
+    _loadBooks();
   }
 
-  Widget buildBookGrid(List<Map<String, dynamic>> books, BuildContext context, {bool isRented = true}) {
+  Future<void> _loadBooks() async {
+    setState(() => isLoading = true);
+    try {
+      final rented = await BookService.getRentedBooks();
+      final purchased = await BookService.getPurchasedBooks();
+      setState(() {
+        rentedBooks = rented;
+        purchasedBooks = purchased;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() => isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading books: $e')),
+        );
+      }
+    }
+  }
+
+  Widget buildBookGrid(List<BookModel> books, BuildContext context, {bool isRented = true}) {
     final width = MediaQuery.of(context).size.width;
 
     final crossCount = width > 1000
@@ -73,6 +56,10 @@ class _LibraryViewState extends State<LibraryView>
             : width > 600
                 ? 3
                 : 2;
+
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     if (books.isEmpty) {
       return Center(
@@ -122,9 +109,10 @@ class _LibraryViewState extends State<LibraryView>
     );
   }
 
-  Widget _buildLibraryBookCard(Map<String, dynamic> book, bool isRented) {
-    final daysLeft = isRented ? (book["daysLeft"] as int?) ?? 0 : 0;
-    final totalDays = isRented ? (book["totalDays"] as int?) ?? 30 : 30;
+  Widget _buildLibraryBookCard(BookModel book, bool isRented) {
+    final daysLeft = isRented ? book.daysLeft : 0;
+    final totalDays = isRented ? (book.rentalDays ?? 30) : 30;
+    final purchaseDate = !isRented ? DateFormat('MMM dd, yyyy').format(book.transactionDate) : '';
     
     return Material(
       child: InkWell(
@@ -149,11 +137,31 @@ class _LibraryViewState extends State<LibraryView>
                 children: [
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-                    child: Image.network(
-                      book["image"] ?? "https://picsum.photos/200",
-                      fit: BoxFit.cover,
-                      height: 150,
-                    ),
+                    child: book.image.startsWith('http')
+                        ? Image.network(
+                            book.image,
+                            fit: BoxFit.cover,
+                            height: 150,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                height: 150,
+                                color: Colors.grey.shade200,
+                                child: const Icon(Icons.book, size: 50),
+                              );
+                            },
+                          )
+                        : Image.asset(
+                            book.image,
+                            fit: BoxFit.cover,
+                            height: 150,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                height: 150,
+                                color: Colors.grey.shade200,
+                                child: const Icon(Icons.book, size: 50),
+                              );
+                            },
+                          ),
                   ),
                   if (isRented && daysLeft > 0)
                     Positioned(
@@ -186,7 +194,7 @@ class _LibraryViewState extends State<LibraryView>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        book["title"] ?? "Unknown Book",
+                        book.title,
                         style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
@@ -197,7 +205,7 @@ class _LibraryViewState extends State<LibraryView>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        book["author"] ?? "Unknown Author",
+                        book.author,
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey.shade600,
@@ -225,7 +233,7 @@ class _LibraryViewState extends State<LibraryView>
                         )
                       else
                         Text(
-                          'Purchased: ${book["purchaseDate"] ?? "N/A"}',
+                          'Purchased: $purchaseDate',
                           style: TextStyle(
                             fontSize: 11,
                             color: Colors.grey.shade500,
@@ -250,6 +258,38 @@ class _LibraryViewState extends State<LibraryView>
         elevation: 2,
         backgroundColor: const Color(0xFF1A73E8),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh',
+            onPressed: _loadBooks,
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            tooltip: 'Clear All Books',
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Clear All Books'),
+                  content: const Text('Are you sure you want to clear all books from your library?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        await BookService.clearAllBooks();
+                        _loadBooks();
+                        if (mounted) Navigator.pop(context);
+                      },
+                      child: const Text('Clear'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.event_note),
             tooltip: 'My Reservations',
@@ -314,8 +354,14 @@ class _LibraryViewState extends State<LibraryView>
       body: TabBarView(
         controller: tabController,
         children: [
-          buildBookGrid(rentedBooks, context, isRented: true),
-          buildBookGrid(purchasedBooks, context, isRented: false),
+          RefreshIndicator(
+            onRefresh: _loadBooks,
+            child: buildBookGrid(rentedBooks, context, isRented: true),
+          ),
+          RefreshIndicator(
+            onRefresh: _loadBooks,
+            child: buildBookGrid(purchasedBooks, context, isRented: false),
+          ),
         ],
       ),
     );
