@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../../domain/usecases/get_current_tab_usecase.dart';
 import '../../domain/usecases/change_tab_usecase.dart';
 
@@ -19,6 +20,12 @@ class HomeProvider extends ChangeNotifier {
 
   void changeTab(int index) {
     changeTabUseCase(index);
+    _currentIndex = index;
+    notifyListeners();
+  }
+
+  void setCurrentIndex(int index) {
+    if (_currentIndex == index) return;
     _currentIndex = index;
     notifyListeners();
   }

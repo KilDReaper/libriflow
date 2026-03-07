@@ -211,11 +211,11 @@ class _SearchViewState extends State<SearchView> {
 
     return GridView.builder(
       itemCount: books.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.65,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 170,
+        childAspectRatio: 0.58,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
       ),
       itemBuilder: (context, index) {
         final book = books[index];
@@ -250,12 +250,15 @@ class _SearchViewState extends State<SearchView> {
               ],
             ),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: _buildBookImage(book['image'].toString()),
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: _buildBookImage(book['image'].toString()),
+                  ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   book['title'].toString(),
                   textAlign: TextAlign.center,
@@ -263,16 +266,17 @@ class _SearchViewState extends State<SearchView> {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
+                    fontSize: 13,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Text(
                   book['author'].toString(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.grey.shade600,
-                    fontSize: 12,
+                    fontSize: 11,
                   ),
                 ),
               ],

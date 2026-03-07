@@ -112,61 +112,63 @@ class _FeaturedBookCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             // Book Cover
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Image.network(
                 image,
-                height: 200,
+                height: 180,
                 width: 160,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Container(
-                  height: 200,
+                  height: 180,
                   width: 160,
                   color: Colors.grey[300],
                   child: const Icon(Icons.book, size: 48),
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
 
             // Title
             Text(
               title,
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
 
             // Author
             Text(
               author,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 color: Colors.grey[600],
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const Spacer(),
+            const SizedBox(height: 6),
 
             // Rating and Price
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.star, size: 14, color: Colors.amber),
+                    const Icon(Icons.star, size: 13, color: Colors.amber),
                     const SizedBox(width: 2),
                     Text(
                       rating.toStringAsFixed(1),
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -175,7 +177,7 @@ class _FeaturedBookCard extends StatelessWidget {
                 Text(
                   '₹$price',
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1A73E8),
                   ),
@@ -199,47 +201,48 @@ class _FeaturedBookCardSkeleton extends StatelessWidget {
       margin: const EdgeInsets.only(right: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            height: 200,
+            height: 180,
             width: 160,
             decoration: BoxDecoration(
               color: Colors.grey[300],
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Container(
             width: 140,
-            height: 14,
+            height: 13,
             decoration: BoxDecoration(
               color: Colors.grey[300],
               borderRadius: BorderRadius.circular(4),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Container(
             width: 100,
-            height: 12,
+            height: 11,
             decoration: BoxDecoration(
               color: Colors.grey[300],
               borderRadius: BorderRadius.circular(4),
             ),
           ),
-          const Spacer(),
+          const SizedBox(height: 6),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
                 width: 40,
-                height: 12,
+                height: 11,
                 decoration: BoxDecoration(
                   color: Colors.grey[300],
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
               Container(
-                width: 40,
+                width: 35,
                 height: 12,
                 decoration: BoxDecoration(
                   color: Colors.grey[300],

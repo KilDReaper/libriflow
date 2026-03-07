@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../shared/utils/mysnackbar.dart';
+import '../../../../services/book_service.dart';
 import '../../../reservations/presentation/providers/reservation_provider.dart';
 
-class EnhancedBookDetailsPage extends StatelessWidget {
+class EnhancedBookDetailsPage extends StatefulWidget {
   final Map<String, dynamic> book;
 
   const EnhancedBookDetailsPage({
@@ -12,14 +13,94 @@ class EnhancedBookDetailsPage extends StatelessWidget {
   });
 
   @override
+  State<EnhancedBookDetailsPage> createState() => _EnhancedBookDetailsPageState();
+}
+
+class _EnhancedBookDetailsPageState extends State<EnhancedBookDetailsPage> {
+  bool _isProcessing = false;
+
+  Future<void> _rentBook() async {
+    if (_isProcessing) return;
+    setState(() => _isProcessing = true);
+    
+    try {
+      await BookService.rentBook(
+        id: widget.book['id'].toString(),
+        title: widget.book['title'].toString(),
+        author: widget.book['author'].toString(),
+        price: (widget.book['price'] as num?)?.toInt() ?? 0,
+        image: widget.book['image'].toString(),
+        section: widget.book['section'].toString(),
+        rating: (widget.book['rating'] as num?)?.toDouble() ?? 0.0,
+        rentalDays: 30,
+      );
+      if (mounted) {
+        MySnackBar.show(
+          context,
+          message: '${widget.book['title']} rented successfully for 30 days',
+          background: Colors.green,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        MySnackBar.show(
+          context,
+          message: e.toString().replaceAll('Exception: ', ''),
+          background: Colors.red,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
+    }
+  }
+
+  Future<void> _buyBook() async {
+    if (_isProcessing) return;
+    setState(() => _isProcessing = true);
+    
+    try {
+      await BookService.buyBook(
+        id: widget.book['id'].toString(),
+        title: widget.book['title'].toString(),
+        author: widget.book['author'].toString(),
+        price: (widget.book['price'] as num?)?.toInt() ?? 0,
+        image: widget.book['image'].toString(),
+        section: widget.book['section'].toString(),
+        rating: (widget.book['rating'] as num?)?.toDouble() ?? 0.0,
+      );
+      if (mounted) {
+        MySnackBar.show(
+          context,
+          message: '${widget.book['title']} purchased successfully',
+          background: Colors.green,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        MySnackBar.show(
+          context,
+          message: e.toString().replaceAll('Exception: ', ''),
+          background: Colors.red,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final title = book['title']?.toString() ?? 'Untitled';
-    final author = book['author']?.toString() ?? 'Unknown';
-    final image = book['image']?.toString() ?? '';
-    final section = book['section']?.toString() ?? 'General';
-    final price = (book['price'] as num?)?.toInt() ?? 0;
-    final rating = (book['rating'] as num?)?.toDouble() ?? 0.0;
-    final bookId = book['id']?.toString() ?? '';
+    final title = widget.book['title']?.toString() ?? 'Untitled';
+    final author = widget.book['author']?.toString() ?? 'Unknown';
+    final image = widget.book['image']?.toString() ?? '';
+    final section = widget.book['section']?.toString() ?? 'General';
+    final price = (widget.book['price'] as num?)?.toInt() ?? 0;
+    final rating = (widget.book['rating'] as num?)?.toDouble() ?? 0.0;
+    final bookId = widget.book['id']?.toString() ?? '';
 
     return Scaffold(
       body: Consumer<ReservationProvider>(
@@ -226,7 +307,7 @@ class EnhancedBookDetailsPage extends StatelessWidget {
                       const SizedBox(height: 32),
 
                       // Description (if available)
-                      if (book['description'] != null) ...[
+                      if (widget.book['description'] != null) ...[
                         const Text(
                           'Description',
                           style: TextStyle(
@@ -236,7 +317,7 @@ class EnhancedBookDetailsPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          book['description'].toString(),
+                          widget.book['description'].toString(),
                           style: TextStyle(
                             fontSize: 15,
                             color: Colors.grey[700],
@@ -246,12 +327,78 @@ class EnhancedBookDetailsPage extends StatelessWidget {
                         const SizedBox(height: 32),
                       ],
 
-                      // Reserve Button
+                      // Rent and Buy Buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: SizedBox(
+                              height: 56,
+                              child: ElevatedButton.icon(
+                                onPressed: _isProcessing ? null : _rentBook,
+                                icon: _isProcessing
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : const Icon(Icons.calendar_month),
+                                label: Text(
+                                  _isProcessing ? 'Processing...' : 'Rent (30 days)',
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF1A73E8),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: SizedBox(
+                              height: 56,
+                              child: OutlinedButton.icon(
+                                onPressed: _isProcessing ? null : _buyBook,
+                                icon: const Icon(Icons.shopping_cart),
+                                label: const Text(
+                                  'Buy',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFF1A73E8),
+                                  side: const BorderSide(
+                                    color: Color(0xFF1A73E8),
+                                    width: 2,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Reserve Button (as secondary action)
                       SizedBox(
                         width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton.icon(
-                          onPressed: provider.isLoading
+                        height: 48,
+                        child: OutlinedButton.icon(
+                          onPressed: (provider.isLoading || _isProcessing)
                               ? null
                               : () {
                                   provider.createReservation(
@@ -261,55 +408,26 @@ class EnhancedBookDetailsPage extends StatelessWidget {
                                 },
                           icon: provider.isLoading
                               ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
+                                  width: 16,
+                                  height: 16,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: Colors.white,
                                   ),
                                 )
-                              : const Icon(Icons.bookmark_add),
+                              : const Icon(Icons.bookmark_add_outlined),
                           label: Text(
                             provider.isLoading
                                 ? 'Reserving...'
-                                : 'Reserve Book',
+                                : 'Reserve for Later',
                             style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1A73E8),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // View Details Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            // Additional details or actions
-                          },
-                          icon: const Icon(Icons.info_outline),
-                          label: const Text(
-                            'More Information',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF1A73E8),
-                            side: const BorderSide(
-                              color: Color(0xFF1A73E8),
-                              width: 2,
+                            foregroundColor: Colors.grey[700],
+                            side: BorderSide(
+                              color: Colors.grey[400]!,
                             ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),

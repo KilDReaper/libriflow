@@ -293,7 +293,7 @@ class _BooksGrid extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: MediaQuery.of(context).size.width > 600 ? 2 : 1,
-        childAspectRatio: 2.5,
+        childAspectRatio: 4.5,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
@@ -329,111 +329,98 @@ class _BookCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(10),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Cover Image
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  book.image,
-                  width: 60,
-                  height: 84,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    width: 60,
-                    height: 84,
-                    color: Colors.grey[300],
-                    child: const Icon(Icons.book, size: 32),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              
-              // Book Info
+              _buildBookImage(book.image),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Text(
+                      book.title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        height: 1.1,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      book.author,
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 12,
+                        height: 1.1,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 4,
+                      runSpacing: 2,
                       children: [
-                        Text(
-                          book.title,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                        ...book.genres.take(1).map((genre) => Chip(
+                          label: Text(
+                            genre,
+                            style: const TextStyle(fontSize: 9),
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          book.author,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 14,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 4,
-                          runSpacing: 4,
-                          children: [
-                            ...book.genres.take(2).map((genre) => Chip(
-                              label: Text(
-                                genre,
-                                style: const TextStyle(fontSize: 10),
-                              ),
-                              padding: EdgeInsets.zero,
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              visualDensity: VisualDensity.compact,
-                            )),
-                            _StatusBadge(status: book.status),
-                          ],
-                        ),
+                          padding: EdgeInsets.zero,
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
+                        )),
+                        _StatusBadge(status: book.status),
                       ],
                     ),
+                    const SizedBox(height: 6),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
                               '₹${book.price}',
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: 14,
                                 color: Color(0xFF1A73E8),
                               ),
                             ),
                             Text(
-                              'Stock: ${book.availableQuantity}/${book.stockQuantity}',
+                              '${book.availableQuantity}/${book.stockQuantity}',
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 10,
                                 color: Colors.grey[600],
                               ),
                             ),
                           ],
                         ),
                         Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Row(
-                              children: [
-                                const Icon(Icons.star, size: 16, color: Colors.amber),
-                                const SizedBox(width: 2),
-                                Text(book.rating.toStringAsFixed(1)),
-                              ],
+                            const Icon(Icons.star, size: 14, color: Colors.amber),
+                            const SizedBox(width: 2),
+                            Text(
+                              book.rating.toStringAsFixed(1),
+                              style: const TextStyle(fontSize: 11),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.delete, size: 20),
+                              icon: const Icon(Icons.delete, size: 18),
                               color: Colors.red,
                               onPressed: onDelete,
+                              padding: const EdgeInsets.all(2),
+                              constraints: const BoxConstraints(
+                                minWidth: 28,
+                                minHeight: 28,
+                              ),
                             ),
                           ],
                         ),
@@ -444,6 +431,54 @@ class _BookCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBookImage(String imageUrl) {
+    final safeImageUrl = imageUrl.trim();
+
+    if (safeImageUrl.isEmpty) {
+      return Container(
+        width: 56,
+        height: 78,
+        decoration: BoxDecoration(
+          color: Colors.grey[300],
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: const Icon(Icons.book, size: 28, color: Colors.grey),
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        width: 56,
+        height: 78,
+        color: Colors.grey[200],
+        child: Image.network(
+          safeImageUrl,
+          fit: BoxFit.cover,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.5,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[400]!),
+                ),
+              ),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              color: Colors.grey[300],
+              child: const Icon(Icons.book, size: 28, color: Colors.grey),
+            );
+          },
         ),
       ),
     );

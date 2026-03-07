@@ -47,16 +47,6 @@ class _LibraryViewState extends State<LibraryView>
   }
 
   Widget buildBookGrid(List<BookModel> books, BuildContext context, {bool isRented = true}) {
-    final width = MediaQuery.of(context).size.width;
-
-    final crossCount = width > 1000
-        ? 5
-        : width > 800
-            ? 4
-            : width > 600
-                ? 3
-                : 2;
-
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -96,11 +86,11 @@ class _LibraryViewState extends State<LibraryView>
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: books.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossCount,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: 0.65,
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 170,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.58,
       ),
       itemBuilder: (context, index) {
         final book = books[index];
@@ -189,40 +179,42 @@ class _LibraryViewState extends State<LibraryView>
               ),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(10),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         book.title,
                         style: const TextStyle(
                           fontWeight: FontWeight.w600,
-                          fontSize: 14,
+                          fontSize: 13,
                           height: 1.2,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
                       Text(
                         book.author,
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           color: Colors.grey.shade600,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const Spacer(),
+                      const SizedBox(height: 6),
                       if (isRented && daysLeft > 0 && totalDays > 0)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: LinearProgressIndicator(
                                 value: daysLeft / totalDays,
-                                minHeight: 6,
+                                minHeight: 5,
                                 backgroundColor: Colors.grey.shade200,
                                 valueColor: AlwaysStoppedAnimation<Color>(
                                   daysLeft <= 5 ? Colors.red.shade500 : Colors.blue.shade400,
@@ -235,7 +227,7 @@ class _LibraryViewState extends State<LibraryView>
                         Text(
                           'Purchased: $purchaseDate',
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 10,
                             color: Colors.grey.shade500,
                           ),
                         ),

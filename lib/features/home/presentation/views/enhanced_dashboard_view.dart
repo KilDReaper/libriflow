@@ -354,16 +354,11 @@ class _EnhancedDashboardViewState extends State<EnhancedDashboardView>
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           sliver: SliverGrid(
                             gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount:
-                                  MediaQuery.of(context).size.width > 1200
-                                      ? 4
-                                      : MediaQuery.of(context).size.width > 800
-                                          ? 3
-                                          : 2,
-                              childAspectRatio: 0.6,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
+                                SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 170,
+                              childAspectRatio: 0.58,
+                              crossAxisSpacing: 10,
+                              mainAxisSpacing: 10,
                             ),
                             delegate: SliverChildBuilderDelegate(
                               (context, index) {
@@ -424,11 +419,11 @@ class _EnhancedDashboardViewState extends State<EnhancedDashboardView>
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: MediaQuery.of(context).size.width > 800 ? 3 : 2,
-            childAspectRatio: 0.6,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
+          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 170,
+            childAspectRatio: 0.58,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
           ),
           itemCount: 6,
           itemBuilder: (context, index) => const BookCardSkeleton(),

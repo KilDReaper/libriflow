@@ -51,9 +51,16 @@ class _DashboardViewState extends State<DashboardView> {
     required Orientation orientation,
     double spacing = 12,
   }) {
+    // Calculate item width
     final itemWidth = (width - ((crossAxisCount - 1) * spacing)) / crossAxisCount;
+    
+    // Image takes up ~60% of card height
     final imageHeight = itemWidth / 1.35;
-    final contentHeight = orientation == Orientation.portrait ? 185.0 : 165.0;
+    
+    // Content height that adapts - use a more flexible formula
+    // This ensures the ratio works for any screen size
+    final contentHeight = itemWidth * 1.3;
+    
     final itemHeight = imageHeight + contentHeight;
     return itemWidth / itemHeight;
   }
@@ -626,6 +633,8 @@ class _DashboardViewState extends State<DashboardView> {
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ),
@@ -633,55 +642,57 @@ class _DashboardViewState extends State<DashboardView> {
               ),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(10),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         (book['title'] ?? 'Unknown Title').toString(),
                         style: const TextStyle(
-                          fontSize: 15,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                           height: 1.2,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
                       Text(
                         (book['author'] ?? 'Unknown Author').toString(),
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           color: Colors.grey.shade600,
+                          height: 1.2,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.star, size: 14, color: Colors.amber),
-                          const SizedBox(width: 4),
+                          const Icon(Icons.star, size: 13, color: Colors.amber),
+                          const SizedBox(width: 3),
                           Text(
                             ((book['rating'] as num?)?.toDouble() ?? 0.0)
                                 .toStringAsFixed(1),
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
                       ),
-                      const Spacer(),
+                      const SizedBox(height: 3),
                       Text(
                         '\$${(book['price'] as num?)?.toInt() ?? 0}',
                         style: const TextStyle(
-                          fontSize: 15,
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: Colors.blue,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const Spacer(),
                       Row(
                         children: [
                           Expanded(
@@ -690,39 +701,37 @@ class _DashboardViewState extends State<DashboardView> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blue.shade500,
                                 foregroundColor: Colors.white,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 8),
+                                padding: const EdgeInsets.symmetric(vertical: 6),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
                               ),
                               child: const Text(
                                 'Rent',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 12,
+                                  fontSize: 11,
                                 ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 4),
                           Expanded(
                             child: OutlinedButton(
                               onPressed: () => _buyBook(book),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: Colors.blue.shade500,
                                 side: BorderSide(color: Colors.blue.shade200),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 8),
+                                padding: const EdgeInsets.symmetric(vertical: 6),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
                               ),
                               child: const Text(
                                 'Buy',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 12,
+                                  fontSize: 11,
                                 ),
                               ),
                             ),
@@ -754,6 +763,17 @@ class _DashboardViewState extends State<DashboardView> {
         image,
         fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => fallback(),
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded /
+                      loadingProgress.expectedTotalBytes!
+                  : null,
+            ),
+          );
+        },
       );
     }
 

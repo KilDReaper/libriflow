@@ -40,6 +40,7 @@ class BookCardWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             // Book Cover with Availability Indicator
             Stack(
@@ -48,45 +49,46 @@ class BookCardWidget extends StatelessWidget {
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(16),
                   ),
-                  child: Image.network(
-                    image,
-                    height: 200,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      height: 200,
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.book, size: 64),
+                  child: AspectRatio(
+                    aspectRatio: 0.75,
+                    child: Image.network(
+                      image,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.book, size: 64),
+                      ),
                     ),
                   ),
                 ),
                 // Availability indicator
                 Positioned(
-                  top: 8,
-                  right: 8,
+                  top: 6,
+                  right: 6,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                      horizontal: 6,
+                      vertical: 3,
                     ),
                     decoration: BoxDecoration(
                       color: isAvailable ? Colors.green : Colors.red,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           isAvailable ? Icons.check_circle : Icons.cancel,
-                          size: 12,
+                          size: 10,
                           color: Colors.white,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 3),
                         Text(
                           isAvailable ? 'Available' : 'Out of Stock',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 10,
+                            fontSize: 9,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -98,119 +100,120 @@ class BookCardWidget extends StatelessWidget {
             ),
 
             // Book Details
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Genre Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.blue[50],
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        genre,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.blue[700],
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Genre Badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 2,
                     ),
-                    const SizedBox(height: 8),
-
-                    // Title
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      borderRadius: BorderRadius.circular(4),
                     ),
-                    const SizedBox(height: 4),
-
-                    // Author
-                    Text(
-                      author,
+                    child: Text(
+                      genre,
                       style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[600],
+                        fontSize: 8,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.blue[700],
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                  ),
+                  const SizedBox(height: 4),
 
-                    const Spacer(),
-
-                    // Rating and Price
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Rating
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.star,
-                              size: 16,
-                              color: Colors.amber,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              rating.toStringAsFixed(1),
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                        // Price
-                        Text(
-                          '₹$price',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1A73E8),
-                          ),
-                        ),
-                      ],
+                  // Title
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      height: 1.1,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
 
-                    const SizedBox(height: 8),
+                  // Author
+                  Text(
+                    author,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey[600],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
 
-                    // Reserve Button
-                    if (isAvailable && onReserve != null)
-                      SizedBox(
-                        width: double.infinity,
-                        height: 32,
-                        child: ElevatedButton(
-                          onPressed: onReserve,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1A73E8),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                  const SizedBox(height: 4),
+
+                  // Rating and Price
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Rating
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.star,
+                            size: 12,
+                            color: Colors.amber,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            rating.toStringAsFixed(1),
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
                             ),
-                            padding: EdgeInsets.zero,
                           ),
-                          child: const Text(
-                            'Reserve',
-                            style: TextStyle(fontSize: 12),
-                          ),
+                        ],
+                      ),
+                      // Price
+                      Text(
+                        '₹$price',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1A73E8),
                         ),
                       ),
-                  ],
-                ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  // Reserve Button
+                  if (isAvailable && onReserve != null)
+                    SizedBox(
+                      width: double.infinity,
+                      height: 26,
+                      child: ElevatedButton(
+                        onPressed: onReserve,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1A73E8),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          padding: EdgeInsets.zero,
+                        ),
+                        child: const Text(
+                          'Reserve',
+                          style: TextStyle(fontSize: 10),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ],
@@ -233,33 +236,28 @@ class BookCardSkeleton extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            height: 200,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
+          AspectRatio(
+            aspectRatio: 0.75,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
               ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 60,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  width: double.infinity,
-                  height: 16,
+                  width: 45,
+                  height: 14,
                   decoration: BoxDecoration(
                     color: Colors.grey[300],
                     borderRadius: BorderRadius.circular(4),
@@ -267,28 +265,37 @@ class BookCardSkeleton extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Container(
-                  width: 100,
-                  height: 14,
+                  width: double.infinity,
+                  height: 12,
                   decoration: BoxDecoration(
                     color: Colors.grey[300],
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 2),
+                Container(
+                  width: 75,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 4),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      width: 50,
-                      height: 14,
+                      width: 40,
+                      height: 10,
                       decoration: BoxDecoration(
                         color: Colors.grey[300],
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
                     Container(
-                      width: 40,
-                      height: 16,
+                      width: 32,
+                      height: 12,
                       decoration: BoxDecoration(
                         color: Colors.grey[300],
                         borderRadius: BorderRadius.circular(4),
