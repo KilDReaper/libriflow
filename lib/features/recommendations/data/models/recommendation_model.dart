@@ -10,11 +10,21 @@ class RecommendationModel extends Recommendation {
   });
 
   factory RecommendationModel.fromJson(Map<String, dynamic> json) {
+    final dynamic authorValue = json['author'] ?? json['authors'];
+    final String author = authorValue is List
+        ? (authorValue.isNotEmpty ? authorValue.first.toString() : 'Unknown')
+        : (authorValue ?? 'Unknown').toString();
+
     return RecommendationModel(
       id: (json['id'] ?? json['_id'] ?? '').toString(),
       title: (json['title'] ?? '').toString(),
-      author: (json['author'] ?? '').toString(),
-      coverUrl: (json['coverUrl'] ?? json['image'] ?? '').toString(),
+      author: author,
+      coverUrl: (json['coverImageUrl'] ??
+              json['coverUrl'] ??
+              json['imageUrl'] ??
+              json['image'] ??
+              '')
+          .toString(),
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
     );
   }

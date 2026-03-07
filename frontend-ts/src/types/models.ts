@@ -33,6 +33,19 @@ export interface RecommendationExplanation {
   signals?: string[];
 }
 
+export interface RecommendationBook {
+  _id: string;
+  title: string;
+  author: string;
+  genre: string;
+  description: string;
+  coverImageUrl: string;
+  rating: number;
+  availableQuantity: number;
+  reason: string;
+  recommendationScore: number;
+}
+
 export type ReservationStatus = 'approved' | 'queued' | 'cancelled' | 'expired' | 'completed';
 
 export interface Reservation {

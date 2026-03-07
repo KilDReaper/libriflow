@@ -60,10 +60,45 @@ class RecommendationRemoteDataSourceImpl
 
   List<dynamic> _extractList(dynamic data) {
     if (data is Map<String, dynamic>) {
-      final value =
-          data['data'] ?? data['items'] ?? data['recommendations'] ?? data['results'] ?? data['books'] ?? data['similar'];
-      if (value is List) {
-        return value;
+      final direct =
+          data['recommendations'] ??
+          data['results'] ??
+          data['books'] ??
+          data['similar'] ??
+          data['items'];
+      if (direct is List) {
+        return direct;
+      }
+
+      final nested = data['data'];
+      if (nested is List) {
+        return nested;
+      }
+      if (nested is Map<String, dynamic>) {
+        final nestedList =
+            nested['recommendations'] ??
+            nested['results'] ??
+            nested['books'] ??
+            nested['similar'] ??
+            nested['items'] ??
+            nested['data'];
+        if (nestedList is List) {
+          return nestedList;
+        }
+
+        // Some APIs wrap twice: { data: { data: { recommendations: [] } } }
+        final nestedData = nested['data'];
+        if (nestedData is Map<String, dynamic>) {
+          final nestedDataList =
+              nestedData['recommendations'] ??
+              nestedData['results'] ??
+              nestedData['books'] ??
+              nestedData['similar'] ??
+              nestedData['items'];
+          if (nestedDataList is List) {
+            return nestedDataList;
+          }
+        }
       }
     }
     if (data is List) {

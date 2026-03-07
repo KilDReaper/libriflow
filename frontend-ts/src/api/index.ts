@@ -7,3 +7,4 @@ export * from './services/reservationService';
 export * from './services/borrowingService';
 export * from './services/paymentService';
 export * from './services/qrService';
+export * from './services/recommendationService';

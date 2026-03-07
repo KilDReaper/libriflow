@@ -1,58 +1,55 @@
 import { apiClient } from '../httpClient';
+import { recommendationService } from './recommendationService';
 import type {
   ApiResponse,
   ExplainRecommendationResponse,
-  RecommendationsResponse,
-  SimilarBooksResponse,
 } from '../../types/api';
-import type { Book, RecommendationExplanation } from '../../types/models';
+import type {
+  Book,
+  RecommendationBook,
+  RecommendationExplanation,
+} from '../../types/models';
 
 const BOOKS_BASE = '/books';
 
-const extractBooks = (data?: ApiResponse<RecommendationsResponse | Book[]>): Book[] => {
-  const payload = data?.data;
-  if (!payload) return [];
-  if (Array.isArray(payload)) return payload;
-  if ('recommendations' in payload && Array.isArray(payload.recommendations)) {
-    return payload.recommendations;
-  }
-  return [];
-};
+const toBook = (item: RecommendationBook): Book => ({
+  id: item._id,
+  title: item.title,
+  author: item.author,
+  genre: item.genre,
+  description: item.description,
+  imageUrl: item.coverImageUrl,
+  averageRating: item.rating,
+  availableCopies: item.availableQuantity,
+});
 
 export const bookService = {
   async getRecommendations(limit?: number): Promise<Book[]> {
-    const response = await apiClient.instance.get<ApiResponse<RecommendationsResponse | Book[]>>(
-      `${BOOKS_BASE}/recommendations`,
-      { params: { limit } },
-    );
-    return extractBooks(response.data);
+    const items = await recommendationService.getMainRecommendations({ limit });
+    return items.map(toBook);
   },
 
   async getTrendingRecommendations(limit?: number): Promise<Book[]> {
-    const response = await apiClient.instance.get<ApiResponse<RecommendationsResponse | Book[]>>(
-      `${BOOKS_BASE}/recommendations/trending`,
-      { params: { limit } },
-    );
-    return extractBooks(response.data);
+    const items = await recommendationService.getTrendingRecommendations({
+      limit,
+    });
+    return items.map(toBook);
   },
 
   async getGenreRecommendations(genre: string, limit?: number): Promise<Book[]> {
-    const response = await apiClient.instance.get<ApiResponse<RecommendationsResponse | Book[]>>(
-      `${BOOKS_BASE}/recommendations/genre/${encodeURIComponent(genre)}`,
-      { params: { limit } },
-    );
-    return extractBooks(response.data);
+    const items = await recommendationService.getAcademicRecommendations({
+      course: genre,
+      limit,
+    });
+    return items.map(toBook);
   },
 
   async getSimilarBooks(bookId: string): Promise<Book[]> {
-    const response = await apiClient.instance.get<ApiResponse<SimilarBooksResponse | Book[]>>(
-      `${BOOKS_BASE}/recommendations/similar/${encodeURIComponent(bookId)}`,
-    );
-    const payload = response.data.data;
-    if (!payload) return [];
-    if (Array.isArray(payload)) return payload;
-    if ('similar' in payload && Array.isArray(payload.similar)) return payload.similar;
-    return [];
+    const items = await recommendationService.getSimilarRecommendations({
+      bookId,
+      limit: 10,
+    });
+    return items.map(toBook);
   },
 
   async explainRecommendation(bookId: string): Promise<RecommendationExplanation | null> {
