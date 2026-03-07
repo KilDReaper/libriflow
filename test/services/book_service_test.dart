@@ -1,14 +1,27 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:libriflow/services/book_service.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'dart:io';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('BookService Tests', () {
+    setUpAll(() async {
+      // Initialize Hive with a test directory
+      final testDirectory = Directory.systemTemp.createTempSync('hive_test_');
+      Hive.init(testDirectory.path);
+    });
+
     setUp(() async {
-      await Hive.initFlutter();
       await BookService.clearAllBooks();
+    });
+
+    tearDown(() async {
+      await BookService.clearAllBooks();
+      if (Hive.isBoxOpen('books')) {
+        await Hive.box('books').close();
+      }
     });
 
     test('rentBook should add a book to the rental database', () async {
