@@ -44,6 +44,9 @@ import 'package:libriflow/features/scanner/data/repositories/scanner_repository_
 import 'package:libriflow/features/scanner/domain/usecases/borrow_by_qr_code.dart';
 import 'package:libriflow/features/scanner/presentation/providers/scanner_provider.dart';
 import 'package:libriflow/features/admin/presentation/providers/admin_books_provider.dart';
+import 'package:libriflow/features/auth/data/datasources/biometric_local_datasource.dart';
+import 'package:libriflow/features/auth/data/repositories/biometric_repository_impl.dart';
+import 'package:libriflow/features/auth/domain/usecases/biometric_usecases.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -87,6 +90,10 @@ class MyApp extends StatelessWidget {
       local: AuthLocalDatasourceImpl(authBox),
     );
 
+    // Initialize biometric repository
+    final biometricDatasource = BiometricLocalDatasourceImpl(authBox);
+    final biometricRepository = BiometricRepositoryImpl(biometricDatasource);
+
     final homeRepository = HomeRepositoryImpl(
       HomeLocalDatasourceImpl(homeBox),
     );
@@ -123,6 +130,11 @@ class MyApp extends StatelessWidget {
             loginUser: LoginUser(authRepository),
             signupUser: SignupUser(authRepository),
             repository: authRepository,
+            authenticateWithBiometric: AuthenticateWithBiometric(biometricRepository),
+            checkBiometricAvailability: CheckBiometricAvailability(biometricRepository),
+            getSavedBiometricEmail: GetSavedBiometricEmail(biometricRepository),
+            saveBiometricEmail: SaveBiometricEmail(biometricRepository),
+            clearBiometricEmail: ClearBiometricEmail(biometricRepository),
           ),
         ),
         ChangeNotifierProvider(

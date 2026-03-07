@@ -20,6 +20,15 @@ class _LoginViewState extends State<LoginView> {
   final passwordController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    // Check biometric availability when the page loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AuthProvider>().checkBiometricStatus();
+    });
+  }
+
+  @override
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
@@ -35,6 +44,10 @@ class _LoginViewState extends State<LoginView> {
       emailController.text.trim(),
       passwordController.text.trim(),
     );
+  }
+
+  void _loginWithBiometric() {
+    context.read<AuthProvider>().loginWithBiometric();
   }
 
   @override
@@ -72,6 +85,38 @@ class _LoginViewState extends State<LoginView> {
                       ? const CircularProgressIndicator()
                       : MyButtonWidgets(text: "Log In", color: const Color(0xffF25C58), onPressed: _login),
                   const SizedBox(height: 20),
+                  // Fingerprint button - only show if available
+                  if (authProvider.isBiometricAvailable)
+                    Column(
+                      children: [
+                        Container(
+                          height: 1,
+                          color: Colors.grey[300],
+                          margin: const EdgeInsets.symmetric(vertical: 15),
+                        ),
+                        GestureDetector(
+                          onTap: authProvider.isLoading ? null : _loginWithBiometric,
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.fingerprint,
+                                size: 48,
+                                color: authProvider.isLoading ? Colors.grey : const Color(0xffF25C58),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Use Fingerprint',
+                                style: TextStyle(
+                                  color: authProvider.isLoading ? Colors.grey : const Color(0xffF25C58),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
                   GestureDetector(
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SignupView())),
                     child: const Text("Don't have an account? Sign up"),

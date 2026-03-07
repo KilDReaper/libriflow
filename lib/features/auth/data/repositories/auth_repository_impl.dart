@@ -83,6 +83,11 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<String?> getToken() async {
+    return await local.getToken();
+  }
+
+  @override
   Future<void> logout() async {
     await local.clearToken();
   }

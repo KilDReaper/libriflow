@@ -33,6 +33,7 @@ dependencies:
   connectivity_plus: ^6.0.3
   mobile_scanner: ^5.2.3
   shimmer: ^3.0.0
+  local_auth: ^2.1.0
   flutter:
     sdk: flutter
 
