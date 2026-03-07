@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/utils/image_url_resolver.dart';
 
 class FeaturedBooksCarousel extends StatelessWidget {
   final String title;
@@ -101,6 +102,7 @@ class _FeaturedBookCard extends StatelessWidget {
     final title = book['title']?.toString() ?? 'Untitled';
     final author = book['author']?.toString() ?? 'Unknown';
     final image = book['image']?.toString() ?? '';
+    final safeImage = resolveBookImageUrl(image);
     final rating = (book['rating'] as num?)?.toDouble() ?? 0.0;
     final price = (book['price'] as num?)?.toInt() ?? 0;
 
@@ -117,18 +119,31 @@ class _FeaturedBookCard extends StatelessWidget {
             // Book Cover
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                image,
-                height: 180,
-                width: 160,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  height: 180,
-                  width: 160,
-                  color: Colors.grey[300],
-                  child: const Icon(Icons.book, size: 48),
-                ),
-              ),
+              child: isNetworkImageUrl(safeImage)
+                  ? Image.network(
+                      safeImage,
+                      height: 180,
+                      width: 160,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        height: 180,
+                        width: 160,
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.book, size: 48),
+                      ),
+                    )
+                  : Image.asset(
+                      safeImage,
+                      height: 180,
+                      width: 160,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        height: 180,
+                        width: 160,
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.book, size: 48),
+                      ),
+                    ),
             ),
             const SizedBox(height: 6),
 

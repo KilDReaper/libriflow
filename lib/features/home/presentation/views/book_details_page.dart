@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../shared/utils/image_url_resolver.dart';
 import '../../../../shared/utils/mysnackbar.dart';
 import '../../../reservations/presentation/providers/reservation_provider.dart';
 
@@ -115,9 +116,10 @@ class BookDetailsPage extends StatelessWidget {
   }
 
   Widget _buildImage() {
-    if (image.startsWith('http')) {
+    final safeImage = resolveBookImageUrl(image);
+    if (isNetworkImageUrl(safeImage)) {
       return Image.network(
-        image,
+        safeImage,
         width: double.infinity,
         height: 220,
         fit: BoxFit.cover,
@@ -125,10 +127,18 @@ class BookDetailsPage extends StatelessWidget {
     }
 
     return Image.asset(
-      image,
+      safeImage,
       width: double.infinity,
       height: 220,
       fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          width: double.infinity,
+          height: 220,
+          color: Colors.grey.shade200,
+          child: const Icon(Icons.book, size: 80),
+        );
+      },
     );
   }
 }

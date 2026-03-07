@@ -6,6 +6,9 @@ abstract class RecommendationRemoteDataSource {
     bool trending = false,
     String? genre,
     String? similarToBookId,
+    String? bookType,
+    String? course,
+    String? className,
   });
 }
 
@@ -18,6 +21,9 @@ class RecommendationRemoteDataSourceImpl
     bool trending = false,
     String? genre,
     String? similarToBookId,
+    String? bookType,
+    String? course,
+    String? className,
   }) async {
     String path = 'books/recommendations';
     if (similarToBookId != null && similarToBookId.isNotEmpty) {
@@ -28,7 +34,22 @@ class RecommendationRemoteDataSourceImpl
       path = 'books/recommendations/trending';
     }
 
-    final response = await client.get(path);
+    final query = <String, dynamic>{};
+    if (bookType != null && bookType.trim().isNotEmpty) {
+      query['bookType'] = bookType.trim();
+    }
+    if (course != null && course.trim().isNotEmpty) {
+      query['course'] = course.trim();
+    }
+    if (className != null && className.trim().isNotEmpty) {
+      query['className'] = className.trim();
+      query['class'] = className.trim();
+    }
+
+    final response = await client.get(
+      path,
+      queryParameters: query.isEmpty ? null : query,
+    );
 
     final items = _extractList(response.data);
 

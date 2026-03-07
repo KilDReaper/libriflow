@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../services/book_service.dart';
+import '../../../../shared/utils/image_url_resolver.dart';
 import '../../data/models/book_model.dart';
 import '../../../reservations/presentation/pages/my_reservations_page.dart';
 
@@ -18,6 +19,19 @@ class _LibraryViewState extends State<LibraryView>
   List<BookModel> rentedBooks = [];
   List<BookModel> purchasedBooks = [];
   bool isLoading = true;
+
+  double _libraryGridRatio(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final scale = MediaQuery.textScalerOf(context).scale(1.0);
+
+    if (size.width < 360 || scale >= 1.2) {
+      return 0.48;
+    }
+    if (size.width < 430) {
+      return 0.5;
+    }
+    return 0.52;
+  }
 
   @override
   void initState() {
@@ -86,11 +100,12 @@ class _LibraryViewState extends State<LibraryView>
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: books.length,
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: 170,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: 0.58,
+        // Dynamic tile height improves resilience across device sizes/text scales.
+        childAspectRatio: _libraryGridRatio(context),
       ),
       itemBuilder: (context, index) {
         final book = books[index];
@@ -103,6 +118,8 @@ class _LibraryViewState extends State<LibraryView>
     final daysLeft = isRented ? book.daysLeft : 0;
     final totalDays = isRented ? (book.rentalDays ?? 30) : 30;
     final purchaseDate = !isRented ? DateFormat('MMM dd, yyyy').format(book.transactionDate) : '';
+    final safeImage = resolveBookImageUrl(book.image);
+    final useNetworkImage = isNetworkImageUrl(safeImage);
     
     return Material(
       child: InkWell(
@@ -127,26 +144,26 @@ class _LibraryViewState extends State<LibraryView>
                 children: [
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-                    child: book.image.startsWith('http')
+                    child: useNetworkImage
                         ? Image.network(
-                            book.image,
+                            safeImage,
                             fit: BoxFit.cover,
-                            height: 150,
+                            height: 138,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
-                                height: 150,
+                                height: 138,
                                 color: Colors.grey.shade200,
                                 child: const Icon(Icons.book, size: 50),
                               );
                             },
                           )
                         : Image.asset(
-                            book.image,
+                          safeImage,
                             fit: BoxFit.cover,
-                            height: 150,
+                            height: 138,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
-                                height: 150,
+                                height: 138,
                                 color: Colors.grey.shade200,
                                 child: const Icon(Icons.book, size: 50),
                               );
@@ -180,58 +197,63 @@ class _LibraryViewState extends State<LibraryView>
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        book.title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                          height: 1.2,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        book.author,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey.shade600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                      if (isRented && daysLeft > 0 && totalDays > 0)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final scale = MediaQuery.textScalerOf(context).scale(1.0);
+                      final compact = constraints.maxHeight < 130 || scale > 1.15;
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.max,
+                        children: [
+                          Text(
+                            book.title,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: compact ? 12 : 13,
+                              height: 1.2,
+                            ),
+                            maxLines: compact ? 1 : 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            book.author,
+                            style: TextStyle(
+                              fontSize: compact ? 10 : 11,
+                              color: Colors.grey.shade600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const Spacer(),
+                          if (isRented && daysLeft > 0 && totalDays > 0)
                             ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: LinearProgressIndicator(
                                 value: daysLeft / totalDays,
-                                minHeight: 5,
+                                minHeight: compact ? 4 : 5,
                                 backgroundColor: Colors.grey.shade200,
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  daysLeft <= 5 ? Colors.red.shade500 : Colors.blue.shade400,
+                                  daysLeft <= 5
+                                      ? Colors.red.shade500
+                                      : Colors.blue.shade400,
                                 ),
                               ),
+                            )
+                          else
+                            Text(
+                              'Purchased: $purchaseDate',
+                              style: TextStyle(
+                                fontSize: compact ? 9 : 10,
+                                color: Colors.grey.shade500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ],
-                        )
-                      else
-                        Text(
-                          'Purchased: $purchaseDate',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey.shade500,
-                          ),
-                        ),
-                    ],
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),

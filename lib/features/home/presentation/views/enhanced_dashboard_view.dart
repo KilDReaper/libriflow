@@ -356,7 +356,8 @@ class _EnhancedDashboardViewState extends State<EnhancedDashboardView>
                             gridDelegate:
                                 SliverGridDelegateWithMaxCrossAxisExtent(
                               maxCrossAxisExtent: 170,
-                              childAspectRatio: 0.58,
+                              // Taller cards avoid RenderFlex overflows in tight heights.
+                              childAspectRatio: 0.52,
                               crossAxisSpacing: 10,
                               mainAxisSpacing: 10,
                             ),
@@ -421,7 +422,7 @@ class _EnhancedDashboardViewState extends State<EnhancedDashboardView>
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
             maxCrossAxisExtent: 170,
-            childAspectRatio: 0.58,
+            childAspectRatio: 0.52,
             crossAxisSpacing: 10,
             mainAxisSpacing: 10,
           ),

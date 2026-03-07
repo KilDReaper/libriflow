@@ -1,4 +1,5 @@
 import '../core/network/api_client.dart';
+import '../shared/utils/image_url_resolver.dart';
 
 class RemoteBookService {
   final ApiClient _client = ApiClient();
@@ -78,14 +79,23 @@ class RemoteBookService {
         ? (authorValue.isNotEmpty ? authorValue.first.toString() : 'Unknown')
         : (authorValue ?? 'Unknown').toString();
 
-    final image = (map['image'] ??
-            map['coverUrl'] ??
-            map['cover'] ??
-            map['imageUrl'] ??
-          map['coverImage'] ??
-            map['thumbnail'] ??
-            '')
-        .toString();
+    final rawImage =
+        map['image'] ??
+        map['coverUrl'] ??
+      map['coverImageUrl'] ??
+      map['cover_page_url'] ??
+      map['coverPageUrl'] ??
+      map['coverpageUrl'] ??
+        map['cover_url'] ??
+        map['cover'] ??
+        map['imageUrl'] ??
+        map['image_url'] ??
+        map['coverImage'] ??
+        map['thumbnail'] ??
+        map['bookCover'] ??
+        map['book_cover'] ??
+        '';
+    final image = resolveBookImageUrl(rawImage);
 
     final priceNum = (map['price'] ?? map['rentalPrice'] ?? map['amount'] ?? 0)
         as num?;

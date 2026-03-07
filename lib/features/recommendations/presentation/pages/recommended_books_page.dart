@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
+
+import '../../../../shared/utils/image_url_resolver.dart';
 import '../../../../shared/utils/mysnackbar.dart';
 import '../../../home/presentation/views/book_details_page.dart';
 import '../../domain/entities/recommendation.dart';
@@ -23,12 +25,187 @@ class RecommendedBooksPage extends StatefulWidget {
 }
 
 class _RecommendedBooksPageState extends State<RecommendedBooksPage> {
+  late final TextEditingController _courseController;
+  late final TextEditingController _classController;
+  late String _mode;
+
+  bool get _isAcademic => _mode == 'academic';
+
   @override
   void initState() {
     super.initState();
+    _courseController = TextEditingController(text: widget.course);
+    _classController = TextEditingController(text: widget.className);
+    _mode = (widget.bookType == 'non-course' || widget.bookType == 'non-academic')
+        ? 'non-academic'
+        : 'academic';
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<RecommendationProvider>().fetchRecommendations();
+      _fetchRecommendations();
     });
+  }
+
+  @override
+  void dispose() {
+    _courseController.dispose();
+    _classController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchRecommendations() {
+    return context.read<RecommendationProvider>().fetchRecommendations(
+          bookType: _isAcademic ? 'course' : 'non-course',
+          course: _isAcademic ? _courseController.text.trim() : null,
+          className: _isAcademic ? _classController.text.trim() : null,
+        );
+  }
+
+  Widget _buildModeButton({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: SizedBox(
+        height: 42,
+        child: ElevatedButton(
+          onPressed: onTap,
+          style: ElevatedButton.styleFrom(
+            elevation: 0,
+            backgroundColor:
+                selected ? const Color(0xFF1A73E8) : Colors.blue.shade50,
+            foregroundColor: selected ? Colors.white : Colors.blue.shade700,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildControlPanel(RecommendationProvider provider) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade200,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Recommendation Type',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              _buildModeButton(
+                label: 'Academic',
+                selected: _isAcademic,
+                onTap: () {
+                  if (_mode == 'academic') return;
+                  setState(() => _mode = 'academic');
+                },
+              ),
+              const SizedBox(width: 10),
+              _buildModeButton(
+                label: 'Non-Academic',
+                selected: !_isAcademic,
+                onTap: () {
+                  if (_mode == 'non-academic') return;
+                  setState(() => _mode = 'non-academic');
+                },
+              ),
+            ],
+          ),
+          if (_isAcademic) ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: _courseController,
+              textInputAction: TextInputAction.next,
+              decoration: const InputDecoration(
+                labelText: 'Course',
+                hintText: 'e.g. Computer Science',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _classController,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _fetchRecommendations(),
+              decoration: const InputDecoration(
+                labelText: 'Class',
+                hintText: 'e.g. 100 Level / Grade 12',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: provider.isLoading ? null : _fetchRecommendations,
+              icon: const Icon(Icons.auto_awesome),
+              label: const Text('Get Recommendations'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1A73E8),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent(RecommendationProvider provider) {
+    if (provider.isLoading) {
+      return const _ShimmerGrid();
+    }
+
+    if (provider.status == RecommendationStatus.error) {
+      return _ErrorState(
+        onRetry: _fetchRecommendations,
+      );
+    }
+
+    if (provider.items.isEmpty) {
+      return const _EmptyState();
+    }
+
+    return RefreshIndicator(
+      onRefresh: _fetchRecommendations,
+      child: GridView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: provider.items.length,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 0.6,
+        ),
+        itemBuilder: (context, index) {
+          final item = provider.items[index];
+          return _RecommendationCard(item: item);
+        },
+      ),
+    );
   }
 
   @override
@@ -54,36 +231,11 @@ class _RecommendedBooksPageState extends State<RecommendedBooksPage> {
             }
           });
 
-          if (provider.isLoading) {
-            return const _ShimmerGrid();
-          }
-
-          if (provider.status == RecommendationStatus.error) {
-            return _ErrorState(
-              onRetry: () => provider.fetchRecommendations(),
-            );
-          }
-
-          if (provider.items.isEmpty) {
-            return const _EmptyState();
-          }
-
-          return RefreshIndicator(
-            onRefresh: () => provider.fetchRecommendations(),
-            child: GridView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: provider.items.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.6,
-              ),
-              itemBuilder: (context, index) {
-                final item = provider.items[index];
-                return _RecommendationCard(item: item);
-              },
-            ),
+          return Column(
+            children: [
+              _buildControlPanel(provider),
+              Expanded(child: _buildContent(provider)),
+            ],
           );
         },
       ),
@@ -98,6 +250,8 @@ class _RecommendationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final safeCoverUrl = resolveBookImageUrl(item.coverUrl);
+
     return Material(
       child: InkWell(
         onTap: () {
@@ -108,7 +262,7 @@ class _RecommendationCard extends StatelessWidget {
                 bookId: item.id,
                 title: item.title,
                 author: item.author,
-                image: item.coverUrl,
+                image: safeCoverUrl,
                 section: 'Recommended',
                 price: 0,
               ),
@@ -137,21 +291,37 @@ class _RecommendationCard extends StatelessWidget {
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(14),
                     ),
-                    child: Image.network(
-                      item.coverUrl,
-                      fit: BoxFit.cover,
-                      height: 140,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: Colors.grey.shade200,
-                        height: 140,
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          Icons.broken_image,
-                          color: Colors.grey,
-                          size: 40,
-                        ),
-                      ),
-                    ),
+                    child: isNetworkImageUrl(safeCoverUrl)
+                        ? Image.network(
+                            safeCoverUrl,
+                            fit: BoxFit.cover,
+                            height: 140,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              color: Colors.grey.shade200,
+                              height: 140,
+                              alignment: Alignment.center,
+                              child: const Icon(
+                                Icons.broken_image,
+                                color: Colors.grey,
+                                size: 40,
+                              ),
+                            ),
+                          )
+                        : Image.asset(
+                            safeCoverUrl,
+                            fit: BoxFit.cover,
+                            height: 140,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              color: Colors.grey.shade200,
+                              height: 140,
+                              alignment: Alignment.center,
+                              child: const Icon(
+                                Icons.broken_image,
+                                color: Colors.grey,
+                                size: 40,
+                              ),
+                            ),
+                          ),
                   ),
                   Positioned(
                     top: 8,
@@ -229,7 +399,7 @@ class _RecommendationCard extends StatelessWidget {
                                   bookId: item.id,
                                   title: item.title,
                                   author: item.author,
-                                  image: item.coverUrl,
+                                  image: safeCoverUrl,
                                   section: 'Recommended',
                                   price: 0,
                                 ),

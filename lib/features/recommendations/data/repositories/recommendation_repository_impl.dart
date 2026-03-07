@@ -17,12 +17,18 @@ class RecommendationRepositoryImpl implements RecommendationRepository {
     bool trending = false,
     String? genre,
     String? similarToBookId,
+    String? bookType,
+    String? course,
+    String? className,
   }) async {
     try {
       final models = await remote.getRecommendations(
         trending: trending,
         genre: genre,
         similarToBookId: similarToBookId,
+        bookType: bookType,
+        course: course,
+        className: className,
       );
       await local.cacheRecommendations(models);
       return models;

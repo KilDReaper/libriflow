@@ -24,6 +24,9 @@ class RecommendationProvider extends ChangeNotifier {
     bool trending = false,
     String? genre,
     String? similarToBookId,
+    String? bookType,
+    String? course,
+    String? className,
   }) async {
     _status = RecommendationStatus.loading;
     _errorMessage = null;
@@ -34,6 +37,9 @@ class RecommendationProvider extends ChangeNotifier {
         trending: trending,
         genre: genre,
         similarToBookId: similarToBookId,
+        bookType: bookType,
+        course: course,
+        className: className,
       );
       _status = RecommendationStatus.success;
       notifyListeners();

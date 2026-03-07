@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../services/book_service.dart';
 import '../../../../services/remote_book_service.dart';
+import '../../../../shared/utils/image_url_resolver.dart';
 import '../../../../shared/utils/mysnackbar.dart';
 import '../../../recommendations/presentation/pages/recommended_books_page.dart';
 import '../../../scanner/presentation/pages/qr_scanner_page.dart';
@@ -756,11 +757,12 @@ class _DashboardViewState extends State<DashboardView> {
           child: const Icon(Icons.menu_book, size: 40, color: Colors.grey),
         );
 
-    if (image.isEmpty) return fallback();
+    final safeImage = resolveBookImageUrl(image);
+    if (safeImage.isEmpty) return fallback();
 
-    if (image.startsWith('http')) {
+    if (isNetworkImageUrl(safeImage)) {
       return Image.network(
-        image,
+        safeImage,
         fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => fallback(),
         loadingBuilder: (context, child, loadingProgress) {
@@ -778,7 +780,7 @@ class _DashboardViewState extends State<DashboardView> {
     }
 
     return Image.asset(
-      image,
+      safeImage,
       fit: BoxFit.cover,
       errorBuilder: (_, __, ___) => fallback(),
     );

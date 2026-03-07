@@ -62,6 +62,9 @@ class AdminBookModel {
     // Handle image/cover field
     final image = (json['image'] ??
             json['coverUrl'] ??
+          json['coverImageUrl'] ??
+          json['coverPageUrl'] ??
+          json['coverpageUrl'] ??
             json['cover'] ??
             json['imageUrl'] ??
             json['coverImage'] ??

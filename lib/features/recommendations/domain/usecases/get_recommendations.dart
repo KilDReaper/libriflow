@@ -9,11 +9,17 @@ class GetRecommendations {
     bool trending = false,
     String? genre,
     String? similarToBookId,
+    String? bookType,
+    String? course,
+    String? className,
   }) {
     return repository.getRecommendations(
       trending: trending,
       genre: genre,
       similarToBookId: similarToBookId,
+      bookType: bookType,
+      course: course,
+      className: className,
     );
   }
 }

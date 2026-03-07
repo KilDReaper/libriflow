@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import '../../../../services/remote_book_service.dart';
+import '../../../../shared/utils/image_url_resolver.dart';
 import '../../../recommendations/presentation/pages/recommended_books_page.dart';
 import 'book_details_page.dart';
 
@@ -213,7 +214,7 @@ class _SearchViewState extends State<SearchView> {
       itemCount: books.length,
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: 170,
-        childAspectRatio: 0.58,
+        childAspectRatio: 0.52,
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
       ),
@@ -250,7 +251,7 @@ class _SearchViewState extends State<SearchView> {
               ],
             ),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.max,
               children: [
                 Expanded(
                   child: ClipRRect(
@@ -288,7 +289,9 @@ class _SearchViewState extends State<SearchView> {
   }
 
   Widget _buildBookImage(String imageUrl) {
-    if (imageUrl.isEmpty) {
+    final safeImageUrl = resolveBookImageUrl(imageUrl);
+
+    if (safeImageUrl.isEmpty) {
       return Container(
         height: 180,
         width: double.infinity,
@@ -297,8 +300,25 @@ class _SearchViewState extends State<SearchView> {
       );
     }
 
+    if (!isNetworkImageUrl(safeImageUrl)) {
+      return Image.asset(
+        safeImageUrl,
+        height: 180,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            height: 180,
+            width: double.infinity,
+            color: Colors.grey.shade200,
+            child: const Icon(Icons.menu_book, size: 40),
+          );
+        },
+      );
+    }
+
     return Image.network(
-      imageUrl,
+      safeImageUrl,
       height: 180,
       width: double.infinity,
       fit: BoxFit.cover,

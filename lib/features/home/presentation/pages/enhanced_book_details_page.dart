@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../shared/utils/mysnackbar.dart';
+import '../../../../shared/utils/image_url_resolver.dart';
 import '../../../../services/book_service.dart';
 import '../../../reservations/presentation/providers/reservation_provider.dart';
 
@@ -96,7 +97,7 @@ class _EnhancedBookDetailsPageState extends State<EnhancedBookDetailsPage> {
   Widget build(BuildContext context) {
     final title = widget.book['title']?.toString() ?? 'Untitled';
     final author = widget.book['author']?.toString() ?? 'Unknown';
-    final image = widget.book['image']?.toString() ?? '';
+    final image = resolveBookImageUrl(widget.book['image']);
     final section = widget.book['section']?.toString() ?? 'General';
     final price = (widget.book['price'] as num?)?.toInt() ?? 0;
     final rating = (widget.book['rating'] as num?)?.toDouble() ?? 0.0;
@@ -130,14 +131,23 @@ class _EnhancedBookDetailsPageState extends State<EnhancedBookDetailsPage> {
                   background: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.network(
-                        image,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.book, size: 100),
-                        ),
-                      ),
+                      isNetworkImageUrl(image)
+                          ? Image.network(
+                              image,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                color: Colors.grey[300],
+                                child: const Icon(Icons.book, size: 100),
+                              ),
+                            )
+                          : Image.asset(
+                              image,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                color: Colors.grey[300],
+                                child: const Icon(Icons.book, size: 100),
+                              ),
+                            ),
                       // Gradient overlay
                       Container(
                         decoration: BoxDecoration(
