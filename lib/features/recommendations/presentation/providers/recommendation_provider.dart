@@ -27,6 +27,8 @@ class RecommendationProvider extends ChangeNotifier {
     String? bookType,
     String? course,
     String? className,
+    String? preferredAuthor,
+    String? keywords,
   }) async {
     _status = RecommendationStatus.loading;
     _errorMessage = null;
@@ -40,6 +42,8 @@ class RecommendationProvider extends ChangeNotifier {
         bookType: bookType,
         course: course,
         className: className,
+        preferredAuthor: preferredAuthor,
+        keywords: keywords,
       );
       _status = RecommendationStatus.success;
       notifyListeners();

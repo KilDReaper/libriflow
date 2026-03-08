@@ -27,6 +27,9 @@ class RecommendedBooksPage extends StatefulWidget {
 class _RecommendedBooksPageState extends State<RecommendedBooksPage> {
   late final TextEditingController _courseController;
   late final TextEditingController _classController;
+  late final TextEditingController _genreController;
+  late final TextEditingController _authorController;
+  late final TextEditingController _keywordsController;
   late String _mode;
 
   bool get _isAcademic => _mode == 'academic';
@@ -36,6 +39,9 @@ class _RecommendedBooksPageState extends State<RecommendedBooksPage> {
     super.initState();
     _courseController = TextEditingController(text: widget.course);
     _classController = TextEditingController(text: widget.className);
+    _genreController = TextEditingController();
+    _authorController = TextEditingController();
+    _keywordsController = TextEditingController();
     _mode = (widget.bookType == 'non-course' || widget.bookType == 'non-academic')
         ? 'non-academic'
         : 'academic';
@@ -49,6 +55,9 @@ class _RecommendedBooksPageState extends State<RecommendedBooksPage> {
   void dispose() {
     _courseController.dispose();
     _classController.dispose();
+    _genreController.dispose();
+    _authorController.dispose();
+    _keywordsController.dispose();
     super.dispose();
   }
 
@@ -57,6 +66,9 @@ class _RecommendedBooksPageState extends State<RecommendedBooksPage> {
           bookType: _isAcademic ? 'course' : 'non-course',
           course: _isAcademic ? _courseController.text.trim() : null,
           className: _isAcademic ? _classController.text.trim() : null,
+          genre: !_isAcademic ? _genreController.text.trim() : null,
+          preferredAuthor: !_isAcademic ? _authorController.text.trim() : null,
+          keywords: !_isAcademic ? _keywordsController.text.trim() : null,
         );
   }
 
@@ -150,6 +162,41 @@ class _RecommendedBooksPageState extends State<RecommendedBooksPage> {
               decoration: const InputDecoration(
                 labelText: 'Class',
                 hintText: 'e.g. 100 Level / Grade 12',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+            ),
+          ] else ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: _genreController,
+              textInputAction: TextInputAction.next,
+              decoration: const InputDecoration(
+                labelText: 'Genre',
+                hintText: 'e.g. Fantasy, Self-help, Mystery',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _authorController,
+              textInputAction: TextInputAction.next,
+              decoration: const InputDecoration(
+                labelText: 'Preferred Author (Optional)',
+                hintText: 'e.g. Agatha Christie',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _keywordsController,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _fetchRecommendations(),
+              decoration: const InputDecoration(
+                labelText: 'Keywords (Optional)',
+                hintText: 'e.g. adventure, dragons, coming of age',
                 border: OutlineInputBorder(),
                 isDense: true,
               ),

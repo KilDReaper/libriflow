@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dio/dio.dart';
 import '../../domain/entities/auth_user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_local_datasource.dart';
@@ -19,17 +20,7 @@ class AuthRepositoryImpl implements AuthRepository {
     final connectivityResult = await Connectivity().checkConnectivity();
 
     if (connectivityResult == ConnectivityResult.none) {
-      final token = await local.getToken();
-      if (token != null) {
-        return AuthUser(
-          id: '',
-          email: email,
-          username: '',
-          phone: '',
-          token: token,
-        );
-      }
-      throw Exception('No internet connection and no saved session found.');
+      throw Exception('No internet connection. Please connect and login again.');
     }
 
     try {
@@ -37,17 +28,13 @@ class AuthRepositoryImpl implements AuthRepository {
       await local.saveToken(userModel.token);
       return userModel;
     } on SocketException {
-      final token = await local.getToken();
-      if (token != null) {
-        return AuthUser(
-          id: '',
-          email: email,
-          username: '',
-          phone: '',
-          token: token,
-        );
+      throw Exception('Network error. Please check your connection and try again.');
+    } on DioException catch (e) {
+      final statusCode = e.response?.statusCode;
+      if (statusCode == 401) {
+        throw Exception('Invalid email or password.');
       }
-      throw Exception('No internet connection and no saved session found.');
+      throw Exception('Login failed. Please try again.');
     }
   }
 

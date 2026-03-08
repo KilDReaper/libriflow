@@ -8,5 +8,7 @@ abstract class RecommendationRepository {
     String? bookType,
     String? course,
     String? className,
+    String? preferredAuthor,
+    String? keywords,
   });
 }

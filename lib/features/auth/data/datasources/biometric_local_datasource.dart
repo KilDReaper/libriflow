@@ -32,12 +32,14 @@ class BiometricLocalDatasourceImpl implements BiometricLocalDatasource {
     try {
       final isDeviceSupported = await _localAuth.isDeviceSupported();
       final canCheck = await _localAuth.canCheckBiometrics;
-      if (!isDeviceSupported || !canCheck) {
+      if (!isDeviceSupported && !canCheck) {
         return false;
       }
 
-      final availableBiometrics = await _localAuth.getAvailableBiometrics();
-      return availableBiometrics.isNotEmpty;
+      // Some OEM builds can return an empty biometric list even when auth works.
+      // Treat support/check flags as enough for availability and let authenticate
+      // surface exact errors like not enrolled / locked out.
+      return true;
     } catch (e) {
       return false;
     }
@@ -45,15 +47,11 @@ class BiometricLocalDatasourceImpl implements BiometricLocalDatasource {
 
   @override
   Future<bool> authenticateWithBiometrics() async {
-    if (!await canAuthenticateWithBiometrics()) {
-      throw Exception('Biometric authentication is not available on this device.');
-    }
-
     try {
       final result = await _localAuth.authenticate(
         localizedReason: 'Authenticate using your fingerprint',
         options: const AuthenticationOptions(
-          stickyAuth: true,
+          stickyAuth: false,
           biometricOnly: true,
           useErrorDialogs: true,
         ),
@@ -65,15 +63,25 @@ class BiometricLocalDatasourceImpl implements BiometricLocalDatasource {
 
       return true;
     } on PlatformException catch (e) {
-      switch (e.code) {
+      final code = e.code.toLowerCase();
+      switch (code) {
         case auth_error.notAvailable:
+        case 'notavailable':
+        case 'biometric_unavailable':
           throw Exception('Biometric hardware is not available on this device.');
         case auth_error.notEnrolled:
+        case 'notenrolled':
+        case 'biometric_not_enrolled':
           throw Exception('No fingerprint/biometric is enrolled on this device.');
         case auth_error.lockedOut:
+        case 'lockedout':
+        case 'temporarylockout':
           throw Exception('Biometric is temporarily locked. Try again in a moment.');
         case auth_error.permanentlyLockedOut:
+        case 'permanentlylockedout':
           throw Exception('Biometric is locked. Unlock your phone with PIN/pattern first.');
+        case 'passcode_not_set':
+          throw Exception('Set a screen lock (PIN/Pattern/Password) to use biometrics.');
         default:
           throw Exception('Biometric authentication failed: ${e.message ?? e.code}.');
       }

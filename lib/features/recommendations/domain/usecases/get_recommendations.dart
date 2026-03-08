@@ -12,6 +12,8 @@ class GetRecommendations {
     String? bookType,
     String? course,
     String? className,
+    String? preferredAuthor,
+    String? keywords,
   }) {
     return repository.getRecommendations(
       trending: trending,
@@ -20,6 +22,8 @@ class GetRecommendations {
       bookType: bookType,
       course: course,
       className: className,
+      preferredAuthor: preferredAuthor,
+      keywords: keywords,
     );
   }
 }

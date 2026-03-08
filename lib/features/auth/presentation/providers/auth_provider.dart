@@ -108,6 +108,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required this.ref,
   }) : super(AuthState());
 
+  Future<bool> _isCurrentTokenValidOnServer() async {
+    try {
+      await ApiClient().get('auth/profile');
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   // Check if biometric is available
   Future<void> checkBiometricStatus() async {
     try {
@@ -154,6 +163,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
 
     try {
+      // Ensure this device/account has biometric login configured first.
+      final getSavedEmail = ref.read(getSavedBiometricEmailProvider);
+      final savedEmail = await getSavedEmail();
+      if (savedEmail == null || savedEmail.trim().isEmpty) {
+        state = state.copyWith(
+          status: AuthStatus.error,
+          errorMessage: 'No biometric account found. Please login once with email and password first.',
+        );
+        return;
+      }
+
       final checkBiometric = ref.read(checkBiometricAvailabilityProvider);
       final isAvailable = await checkBiometric();
       state = state.copyWith(isBiometricAvailable: isAvailable);
@@ -176,17 +196,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
         return;
       }
 
-      // Get saved email
-      final getSavedEmail = ref.read(getSavedBiometricEmailProvider);
-      final savedEmail = await getSavedEmail();
-      if (savedEmail == null) {
-        state = state.copyWith(
-          status: AuthStatus.error,
-          errorMessage: 'No saved biometric login found. Please login with your email and password first.',
-        );
-        return;
-      }
-
       // Check if we have a saved token for this email
       final repository = ref.read(authRepositoryProvider);
       final isLoggedInPreviously = await repository.isLoggedIn();
@@ -195,6 +204,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
         final token = await repository.getToken();
         if (token != null && token.isNotEmpty) {
           ApiClient().setToken(token);
+
+          final tokenIsValid = await _isCurrentTokenValidOnServer();
+          if (!tokenIsValid) {
+            await repository.logout();
+            ApiClient().clearToken();
+            state = state.copyWith(
+              status: AuthStatus.error,
+              token: null,
+              errorMessage:
+                  'Saved biometric session expired. Please login with email and password.',
+            );
+            return;
+          }
+
           state = state.copyWith(
             status: AuthStatus.loggedIn,
             token: token,
@@ -205,7 +228,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: 'Session expired. Please login with your email and password.',
+        errorMessage: 'Session expired. Please login with your email and password to re-enable biometric login.',
       );
     } catch (e) {
       state = state.copyWith(

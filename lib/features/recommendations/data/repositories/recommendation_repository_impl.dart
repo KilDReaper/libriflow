@@ -20,6 +20,8 @@ class RecommendationRepositoryImpl implements RecommendationRepository {
     String? bookType,
     String? course,
     String? className,
+    String? preferredAuthor,
+    String? keywords,
   }) async {
     try {
       final models = await remote.getRecommendations(
@@ -29,6 +31,8 @@ class RecommendationRepositoryImpl implements RecommendationRepository {
         bookType: bookType,
         course: course,
         className: className,
+        preferredAuthor: preferredAuthor,
+        keywords: keywords,
       );
       await local.cacheRecommendations(models);
       return models;

@@ -41,6 +41,7 @@ class _SearchViewState extends State<SearchView> {
       final fetchedBooks = await _bookService.getBooks(
         search: searchText.trim().isEmpty ? null : searchText,
         category: selectedCategory,
+        includeGoogleBooks: true,
       );
 
       final fetchedCategories = fetchedBooks
@@ -162,8 +163,16 @@ class _SearchViewState extends State<SearchView> {
                       (c) => Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: ActionChip(
-                          label: Text(c),
-                          backgroundColor: Colors.blue.shade50,
+                          label: Text(
+                            c,
+                            style: TextStyle(
+                              color: selectedCategory == c ? Colors.white : Colors.blue.shade900,
+                              fontWeight: selectedCategory == c ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                          backgroundColor: selectedCategory == c 
+                              ? const Color(0xFF1A73E8) 
+                              : Colors.blue.shade50,
                           onPressed: () => _searchByCategory(c),
                         ),
                       ),
