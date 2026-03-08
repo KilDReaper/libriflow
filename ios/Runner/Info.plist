@@ -47,6 +47,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs camera access to scan book QR codes and barcodes</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>This app uses Face ID / Touch ID to authenticate and securely log you in</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

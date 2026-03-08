@@ -44,6 +44,12 @@ String resolveBookImageUrl(dynamic rawValue) {
   return Uri.encodeFull(apiUri.resolve(raw).toString());
 }
 
+/// Resolves user profile image URL
+/// Handles relative paths, absolute URLs, and data URLs
+String resolveUserImageUrl(dynamic rawValue) {
+  return resolveBookImageUrl(rawValue);
+}
+
 bool isNetworkImageUrl(String value) {
   final url = value.trim();
   if (url.isEmpty) {
@@ -72,7 +78,9 @@ String _defaultApiBaseUrl() {
 
   switch (defaultTargetPlatform) {
     case TargetPlatform.android:
-      return 'http://10.0.2.2:5000/api/';
+      // Use your computer's local IP address for physical devices
+      // Change this to 10.0.2.2 if using emulator
+      return 'http://192.168.1.76:5000/api/';
     case TargetPlatform.iOS:
     case TargetPlatform.macOS:
     case TargetPlatform.windows:

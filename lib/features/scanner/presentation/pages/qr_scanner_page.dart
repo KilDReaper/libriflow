@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/scanner_provider.dart';
 
 class QRScannerPage extends ConsumerStatefulWidget {
@@ -44,6 +45,17 @@ class _QRScannerPageState extends ConsumerState<QRScannerPage> {
 
   Future<void> _processScan(String code, BarcodeFormat format) async {
     setState(() => isProcessing = true);
+
+    // If QR contains a web link, open it directly in external browser.
+    if (_isWebUrl(code)) {
+      await _openScannedUrl(code);
+      if (!mounted) return;
+      setState(() {
+        isProcessing = false;
+        isScanned = false;
+      });
+      return;
+    }
     
     final scannerNotifier = ref.read(scannerProvider.notifier);
     final result = await scannerNotifier.borrowByQRCode(code);
@@ -59,6 +71,43 @@ class _QRScannerPageState extends ConsumerState<QRScannerPage> {
       // Error - show error dialog
       final error = ref.read(scannerProvider).error ?? 'Failed to process scan';
       _showErrorDialog(error);
+    }
+  }
+
+  bool _isWebUrl(String value) {
+    final uri = Uri.tryParse(value.trim());
+    if (uri == null) return false;
+    return uri.hasScheme && (uri.scheme == 'http' || uri.scheme == 'https');
+  }
+
+  Future<void> _openScannedUrl(String rawUrl) async {
+    final uri = Uri.parse(rawUrl.trim());
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && mounted) {
+      _showErrorDialog('Unable to open link: $rawUrl');
+      return;
+    }
+
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: const Text('Link Opened', style: TextStyle(color: Colors.green)),
+          content: Text('Opened: $rawUrl'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                setState(() {
+                  isScanned = false;
+                });
+              },
+              child: const Text('Scan Another'),
+            ),
+          ],
+        ),
+      );
     }
   }
 

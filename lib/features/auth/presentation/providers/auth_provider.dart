@@ -129,12 +129,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final user = await loginUser(email, password);
       ApiClient().setToken(user.token);
-      
-      // Automatically enable biometric for this email
-      if (state.isBiometricAvailable) {
-        final saveBiometric = ref.read(saveBiometricEmailProvider);
-        await saveBiometric(email);
-      }
+
+      // Save email so biometric login can identify the account later.
+      final saveBiometric = ref.read(saveBiometricEmailProvider);
+      await saveBiometric(email);
       
       state = state.copyWith(
         status: AuthStatus.loggedIn,
@@ -156,13 +154,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
 
     try {
+      final checkBiometric = ref.read(checkBiometricAvailabilityProvider);
+      final isAvailable = await checkBiometric();
+      state = state.copyWith(isBiometricAvailable: isAvailable);
+      if (!isAvailable) {
+        state = state.copyWith(
+          status: AuthStatus.error,
+          errorMessage: 'Biometric authentication is not available on this device.',
+        );
+        return;
+      }
+
       // Authenticate using biometric
       final authenticate = ref.read(authenticateWithBiometricProvider);
       final isAuthenticated = await authenticate();
       if (!isAuthenticated) {
         state = state.copyWith(
           status: AuthStatus.error,
-          errorMessage: 'Biometric authentication failed',
+          errorMessage: 'Biometric authentication was cancelled.',
         );
         return;
       }
@@ -243,12 +252,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   // Logout
   Future<void> logout() async {
     try {
-      final repository = ref.read(authRepositoryProvider);
-      final clearBiometric = ref.read(clearBiometricEmailProvider);
-      
-      await repository.logout();
-      await clearBiometric();
-      
+      // Keep local token/email so user can return using biometric login.
       ApiClient().clearToken();
       state = state.copyWith(
         status: AuthStatus.loggedOut,

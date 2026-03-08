@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:libriflow/features/auth/presentation/views/login_page.dart';
 import 'package:libriflow/features/profile/presentation/providers/profile_provider.dart';
 import 'package:libriflow/features/auth/presentation/providers/auth_provider.dart';
+import 'package:libriflow/shared/utils/image_url_resolver.dart';
 import '../../domain/entities/user.dart';
 
 class ProfileSettingsPage extends ConsumerStatefulWidget {
@@ -247,7 +248,7 @@ class _ProfileSettingsPageState extends ConsumerState<ProfileSettingsPage> {
                                     ? FileImage(File(_selectedImage!.path))
                                     : (user.avatarUrl != null &&
                                             user.avatarUrl!.isNotEmpty)
-                                        ? NetworkImage(user.avatarUrl!)
+                                        ? NetworkImage(resolveUserImageUrl(user.avatarUrl!))
                                         : const AssetImage(
                                             'assets/images/Logo.png')
                                             as ImageProvider,

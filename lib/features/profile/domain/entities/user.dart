@@ -13,5 +13,5 @@ class User {
     this.avatarUrl,
   });
 
-  get profilePictureUrl => null;
+  Null get profilePictureUrl => null;
 }

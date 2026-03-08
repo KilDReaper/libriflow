@@ -53,7 +53,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
-    
+
     ref.listen(authProvider, (previous, next) async {
       if (next.status == AuthStatus.loggedIn) {
         final permissionGranted = await PermissionService().requestCameraPermission();
@@ -85,38 +85,37 @@ class _LoginViewState extends ConsumerState<LoginView> {
                       ? const CircularProgressIndicator()
                       : MyButtonWidgets(text: "Log In", color: const Color(0xffF25C58), onPressed: _login),
                   const SizedBox(height: 20),
-                  // Fingerprint button - only show if available
-                  if (authState.isBiometricAvailable)
-                    Column(
-                      children: [
-                        Container(
-                          height: 1,
-                          color: Colors.grey[300],
-                          margin: const EdgeInsets.symmetric(vertical: 15),
-                        ),
-                        GestureDetector(
-                          onTap: authState.isLoading ? null : _loginWithBiometric,
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.fingerprint,
-                                size: 48,
+                  // Fingerprint button is always visible; device support is validated on tap.
+                  Column(
+                    children: [
+                      Container(
+                        height: 1,
+                        color: Colors.grey[300],
+                        margin: const EdgeInsets.symmetric(vertical: 15),
+                      ),
+                      GestureDetector(
+                        onTap: authState.isLoading ? null : _loginWithBiometric,
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.fingerprint,
+                              size: 48,
+                              color: authState.isLoading ? Colors.grey : const Color(0xffF25C58),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Use Fingerprint',
+                              style: TextStyle(
                                 color: authState.isLoading ? Colors.grey : const Color(0xffF25C58),
+                                fontWeight: FontWeight.w600,
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Use Fingerprint',
-                                style: TextStyle(
-                                  color: authState.isLoading ? Colors.grey : const Color(0xffF25C58),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 20),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                   GestureDetector(
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SignupView())),
                     child: const Text("Don't have an account? Sign up"),

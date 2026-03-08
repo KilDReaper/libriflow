@@ -32,7 +32,7 @@ class RemoteBookService {
         final response = await _client.get(
           endpoint,
           queryParameters: query.isEmpty ? null : query,
-        );
+        ).timeout(const Duration(seconds: 8));
         final items = _extractList(response.data);
         if (items.isNotEmpty) {
           return items.map(_normalizeBook).toList();

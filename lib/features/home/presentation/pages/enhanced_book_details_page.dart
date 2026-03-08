@@ -38,7 +38,7 @@ class _EnhancedBookDetailsPageState extends State<EnhancedBookDetailsPage> {
       if (mounted) {
         MySnackBar.show(
           context,
-          message: '${widget.book['title']} rented successfully for 30 days',
+          message: '${widget.book['title']} rented successfully for 30 days. Go to Library and tap refresh.',
           background: Colors.green,
         );
       }
@@ -74,7 +74,7 @@ class _EnhancedBookDetailsPageState extends State<EnhancedBookDetailsPage> {
       if (mounted) {
         MySnackBar.show(
           context,
-          message: '${widget.book['title']} purchased successfully',
+          message: '${widget.book['title']} purchased successfully. Go to Library and tap refresh.',
           background: Colors.green,
         );
       }
@@ -337,7 +337,7 @@ class _EnhancedBookDetailsPageState extends State<EnhancedBookDetailsPage> {
                         const SizedBox(height: 32),
                       ],
 
-                      // Rent and Buy Buttons
+                      // Borrow and Buy Buttons
                       Row(
                         children: [
                           Expanded(
@@ -400,50 +400,6 @@ class _EnhancedBookDetailsPageState extends State<EnhancedBookDetailsPage> {
                             ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Reserve Button (as secondary action)
-                      SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: OutlinedButton.icon(
-                          onPressed: (provider.isLoading || _isProcessing)
-                              ? null
-                              : () {
-                                  provider.createReservation(
-                                    bookId: bookId,
-                                    bookTitle: title,
-                                  );
-                                },
-                          icon: provider.isLoading
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Icon(Icons.bookmark_add_outlined),
-                          label: Text(
-                            provider.isLoading
-                                ? 'Reserving...'
-                                : 'Reserve for Later',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.grey[700],
-                            side: BorderSide(
-                              color: Colors.grey[400]!,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
                       ),
                     ],
                   ),
