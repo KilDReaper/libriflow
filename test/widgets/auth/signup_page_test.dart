@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:libriflow/features/auth/presentation/views/signup_page.dart';
 import 'package:libriflow/features/auth/presentation/providers/auth_provider.dart';
+import 'package:libriflow/features/auth/data/datasources/auth_local_datasource.dart';
+import 'package:libriflow/features/auth/data/datasources/biometric_local_datasource.dart';
 import 'package:libriflow/features/auth/domain/repositories/auth_repository.dart';
 import 'package:libriflow/features/auth/domain/repositories/biometric_repository.dart';
 import 'package:libriflow/features/auth/domain/entities/auth_user.dart';
-import 'package:libriflow/features/auth/domain/usecases/login_user.dart';
-import 'package:libriflow/features/auth/domain/usecases/signup_user.dart';
-import 'package:libriflow/features/auth/domain/usecases/biometric_usecases.dart';
 
 // Mock implementations
 class MockAuthRepository implements AuthRepository {
@@ -82,30 +81,63 @@ class MockBiometricRepository implements BiometricRepository {
   Future<void> clearBiometricEmail() async {}
 }
 
+// Mock LocalDataSources for Riverpod
+class MockAuthLocalDataSource implements AuthLocalDatasource {
+  @override
+  Future<void> saveToken(String token) async {}
+
+  @override
+  Future<String?> getToken() async => 'mock_token';
+
+  @override
+  Future<void> deleteToken() async {}
+
+  @override
+  Future<void> clearToken() async {}
+}
+
+class MockBiometricLocalDataSource implements BiometricLocalDatasource {
+  @override
+  Future<void> saveBiometricEmail(String email) async {}
+
+  @override
+  Future<String?> getSavedBiometricEmail() async => null;
+
+  @override
+  Future<void> clearBiometricEmail() async {}
+
+  @override
+  Future<bool> isBiometricAvailable() async => false;
+
+  @override
+  Future<bool> canAuthenticateWithBiometrics() async => false;
+
+  @override
+  Future<bool> authenticateWithBiometrics() async => false;
+}
+
 void main() {
   late MockAuthRepository mockAuthRepository;
   late MockBiometricRepository mockBiometricRepository;
+  late MockAuthLocalDataSource mockAuthLocalDataSource;
+  late MockBiometricLocalDataSource mockBiometricLocalDataSource;
 
   setUp(() {
     mockAuthRepository = MockAuthRepository();
     mockBiometricRepository = MockBiometricRepository();
+    mockAuthLocalDataSource = MockAuthLocalDataSource();
+    mockBiometricLocalDataSource = MockBiometricLocalDataSource();
   });
 
   testWidgets('Signup page renders correctly', (WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: ChangeNotifierProvider(
-          create: (_) => AuthProvider(
-            loginUser: LoginUser(mockAuthRepository),
-            signupUser: SignupUser(mockAuthRepository),
-            repository: mockAuthRepository,
-            authenticateWithBiometric: AuthenticateWithBiometric(mockBiometricRepository),
-            checkBiometricAvailability: CheckBiometricAvailability(mockBiometricRepository),
-            getSavedBiometricEmail: GetSavedBiometricEmail(mockBiometricRepository),
-            saveBiometricEmail: SaveBiometricEmail(mockBiometricRepository),
-            clearBiometricEmail: ClearBiometricEmail(mockBiometricRepository),
-          ),
-          child: const SignupView(),
+      ProviderScope(
+        overrides: [
+          authLocalDataSourceProvider.overrideWithValue(mockAuthLocalDataSource),
+          biometricDatasourceProvider.overrideWithValue(mockBiometricLocalDataSource),
+        ],
+        child: const MaterialApp(
+          home: SignupView(),
         ),
       ),
     );
@@ -115,19 +147,13 @@ void main() {
 
   testWidgets('All signup fields are present', (WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: ChangeNotifierProvider(
-          create: (_) => AuthProvider(
-            loginUser: LoginUser(mockAuthRepository),
-            signupUser: SignupUser(mockAuthRepository),
-            repository: mockAuthRepository,
-            authenticateWithBiometric: AuthenticateWithBiometric(mockBiometricRepository),
-            checkBiometricAvailability: CheckBiometricAvailability(mockBiometricRepository),
-            getSavedBiometricEmail: GetSavedBiometricEmail(mockBiometricRepository),
-            saveBiometricEmail: SaveBiometricEmail(mockBiometricRepository),
-            clearBiometricEmail: ClearBiometricEmail(mockBiometricRepository),
-          ),
-          child: const SignupView(),
+      ProviderScope(
+        overrides: [
+          authLocalDataSourceProvider.overrideWithValue(mockAuthLocalDataSource),
+          biometricDatasourceProvider.overrideWithValue(mockBiometricLocalDataSource),
+        ],
+        child: const MaterialApp(
+          home: SignupView(),
         ),
       ),
     );
@@ -137,19 +163,13 @@ void main() {
 
   testWidgets('Signup button is present', (WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: ChangeNotifierProvider(
-          create: (_) => AuthProvider(
-            loginUser: LoginUser(mockAuthRepository),
-            signupUser: SignupUser(mockAuthRepository),
-            repository: mockAuthRepository,
-            authenticateWithBiometric: AuthenticateWithBiometric(mockBiometricRepository),
-            checkBiometricAvailability: CheckBiometricAvailability(mockBiometricRepository),
-            getSavedBiometricEmail: GetSavedBiometricEmail(mockBiometricRepository),
-            saveBiometricEmail: SaveBiometricEmail(mockBiometricRepository),
-            clearBiometricEmail: ClearBiometricEmail(mockBiometricRepository),
-          ),
-          child: const SignupView(),
+      ProviderScope(
+        overrides: [
+          authLocalDataSourceProvider.overrideWithValue(mockAuthLocalDataSource),
+          biometricDatasourceProvider.overrideWithValue(mockBiometricLocalDataSource),
+        ],
+        child: const MaterialApp(
+          home: SignupView(),
         ),
       ),
     );

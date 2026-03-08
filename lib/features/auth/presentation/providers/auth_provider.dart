@@ -1,128 +1,208 @@
-import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../data/datasources/auth_local_datasource.dart';
+import '../../data/datasources/auth_remote_datasource_impl.dart';
+import '../../data/datasources/biometric_local_datasource.dart';
+import '../../data/repositories/auth_repository_impl.dart';
+import '../../data/repositories/biometric_repository_impl.dart';
 import '../../domain/usecases/login_user.dart';
 import '../../domain/usecases/signup_user.dart';
 import '../../domain/usecases/biometric_usecases.dart';
-import '../../domain/repositories/auth_repository.dart';
 import '../../../../core/network/api_client.dart';
 
 enum AuthStatus { initial, loading, loggedIn, loggedOut, error }
 
-class AuthProvider extends ChangeNotifier {
-  final LoginUser loginUser;
-  final SignupUser signupUser;
-  final AuthRepository repository;
-  final AuthenticateWithBiometric authenticateWithBiometric;
-  final CheckBiometricAvailability checkBiometricAvailability;
-  final GetSavedBiometricEmail getSavedBiometricEmail;
-  final SaveBiometricEmail saveBiometricEmail;
-  final ClearBiometricEmail clearBiometricEmail;
+// State class to hold auth state
+class AuthState {
+  final AuthStatus status;
+  final String? token;
+  final String? errorMessage;
+  final bool isBiometricAvailable;
 
-  AuthStatus _status = AuthStatus.initial;
-  String? _token;
-  String? _errorMessage;
-  bool _isBiometricAvailable = false;
-
-  AuthProvider({
-    required this.loginUser,
-    required this.signupUser,
-    required this.repository,
-    required this.authenticateWithBiometric,
-    required this.checkBiometricAvailability,
-    required this.getSavedBiometricEmail,
-    required this.saveBiometricEmail,
-    required this.clearBiometricEmail,
+  AuthState({
+    this.status = AuthStatus.initial,
+    this.token,
+    this.errorMessage,
+    this.isBiometricAvailable = false,
   });
 
-  // Getters
-  AuthStatus get status => _status;
-  String? get token => _token;
-  String? get errorMessage => _errorMessage;
-  bool get isLoading => _status == AuthStatus.loading;
-  bool get isLoggedIn => _status == AuthStatus.loggedIn;
-  bool get isBiometricAvailable => _isBiometricAvailable;
+  bool get isLoading => status == AuthStatus.loading;
+  bool get isLoggedIn => status == AuthStatus.loggedIn;
+
+  AuthState copyWith({
+    AuthStatus? status,
+    String? token,
+    String? errorMessage,
+    bool? isBiometricAvailable,
+  }) {
+    return AuthState(
+      status: status ?? this.status,
+      token: token ?? this.token,
+      errorMessage: errorMessage,
+      isBiometricAvailable: isBiometricAvailable ?? this.isBiometricAvailable,
+    );
+  }
+}
+
+// Providers for dependencies (these will be injected from main.dart or created here)
+final authRemoteDataSourceProvider = Provider((ref) => AuthRemoteDatasourceImpl());
+
+final authLocalDataSourceProvider = Provider<AuthLocalDatasource>((ref) {
+  // This will need to be overridden with the actual Hive box in main.dart
+  throw UnimplementedError('authLocalDataSourceProvider must be overridden with Hive box');
+});
+
+final authRepositoryProvider = Provider((ref) {
+  return AuthRepositoryImpl(
+    remote: ref.watch(authRemoteDataSourceProvider),
+    local: ref.watch(authLocalDataSourceProvider),
+  );
+});
+
+final biometricDatasourceProvider = Provider<BiometricLocalDatasource>((ref) {
+  // This will need to be overridden with the actual Hive box in main.dart
+  throw UnimplementedError('biometricDatasourceProvider must be overridden with Hive box');
+});
+
+final biometricRepositoryProvider = Provider((ref) {
+  return BiometricRepositoryImpl(ref.watch(biometricDatasourceProvider));
+});
+
+// Use case providers
+final loginUserProvider = Provider((ref) {
+  return LoginUser(ref.watch(authRepositoryProvider));
+});
+
+final signupUserProvider = Provider((ref) {
+  return SignupUser(ref.watch(authRepositoryProvider));
+});
+
+final authenticateWithBiometricProvider = Provider((ref) {
+  return AuthenticateWithBiometric(ref.watch(biometricRepositoryProvider));
+});
+
+final checkBiometricAvailabilityProvider = Provider((ref) {
+  return CheckBiometricAvailability(ref.watch(biometricRepositoryProvider));
+});
+
+final getSavedBiometricEmailProvider = Provider((ref) {
+  return GetSavedBiometricEmail(ref.watch(biometricRepositoryProvider));
+});
+
+final saveBiometricEmailProvider = Provider((ref) {
+  return SaveBiometricEmail(ref.watch(biometricRepositoryProvider));
+});
+
+final clearBiometricEmailProvider = Provider((ref) {
+  return ClearBiometricEmail(ref.watch(biometricRepositoryProvider));
+});
+
+// StateNotifier to manage auth state
+class AuthNotifier extends StateNotifier<AuthState> {
+  final LoginUser loginUser;
+  final SignupUser signupUser;
+  final Ref ref;
+
+  AuthNotifier({
+    required this.loginUser,
+    required this.signupUser,
+    required this.ref,
+  }) : super(AuthState());
 
   // Check if biometric is available
   Future<void> checkBiometricStatus() async {
     try {
-      _isBiometricAvailable = await checkBiometricAvailability();
-      notifyListeners();
+      final checkBiometric = ref.read(checkBiometricAvailabilityProvider);
+      final isAvailable = await checkBiometric();
+      state = state.copyWith(isBiometricAvailable: isAvailable);
     } catch (e) {
-      _isBiometricAvailable = false;
-      notifyListeners();
+      state = state.copyWith(isBiometricAvailable: false);
     }
   }
 
   // Login
   Future<void> login(String email, String password) async {
-    _status = AuthStatus.loading;
-    _errorMessage = null;
-    notifyListeners();
+    state = state.copyWith(
+      status: AuthStatus.loading,
+      errorMessage: null,
+    );
 
     try {
       final user = await loginUser(email, password);
-      _token = user.token;
       ApiClient().setToken(user.token);
       
       // Automatically enable biometric for this email
-      if (_isBiometricAvailable) {
-        await saveBiometricEmail(email);
+      if (state.isBiometricAvailable) {
+        final saveBiometric = ref.read(saveBiometricEmailProvider);
+        await saveBiometric(email);
       }
       
-      _status = AuthStatus.loggedIn;
-      notifyListeners();
+      state = state.copyWith(
+        status: AuthStatus.loggedIn,
+        token: user.token,
+      );
     } catch (e) {
-      _errorMessage = e.toString().replaceAll("Exception: ", "");
-      _status = AuthStatus.error;
-      notifyListeners();
+      state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: e.toString().replaceAll("Exception: ", ""),
+      );
     }
   }
 
   // Biometric login
   Future<void> loginWithBiometric() async {
-    _status = AuthStatus.loading;
-    _errorMessage = null;
-    notifyListeners();
+    state = state.copyWith(
+      status: AuthStatus.loading,
+      errorMessage: null,
+    );
 
     try {
       // Authenticate using biometric
-      final isAuthenticated = await authenticateWithBiometric();
+      final authenticate = ref.read(authenticateWithBiometricProvider);
+      final isAuthenticated = await authenticate();
       if (!isAuthenticated) {
-        _errorMessage = 'Biometric authentication failed';
-        _status = AuthStatus.error;
-        notifyListeners();
+        state = state.copyWith(
+          status: AuthStatus.error,
+          errorMessage: 'Biometric authentication failed',
+        );
         return;
       }
 
       // Get saved email
-      final savedEmail = await getSavedBiometricEmail();
+      final getSavedEmail = ref.read(getSavedBiometricEmailProvider);
+      final savedEmail = await getSavedEmail();
       if (savedEmail == null) {
-        _errorMessage = 'No saved biometric login found. Please login with your email and password first.';
-        _status = AuthStatus.error;
-        notifyListeners();
+        state = state.copyWith(
+          status: AuthStatus.error,
+          errorMessage: 'No saved biometric login found. Please login with your email and password first.',
+        );
         return;
       }
 
       // Check if we have a saved token for this email
+      final repository = ref.read(authRepositoryProvider);
       final isLoggedInPreviously = await repository.isLoggedIn();
       if (isLoggedInPreviously) {
         // Use saved token
         final token = await repository.getToken();
         if (token != null && token.isNotEmpty) {
-          _token = token;
           ApiClient().setToken(token);
-          _status = AuthStatus.loggedIn;
-          notifyListeners();
+          state = state.copyWith(
+            status: AuthStatus.loggedIn,
+            token: token,
+          );
           return;
         }
       }
 
-      _errorMessage = 'Session expired. Please login with your email and password.';
-      _status = AuthStatus.error;
-      notifyListeners();
+      state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: 'Session expired. Please login with your email and password.',
+      );
     } catch (e) {
-      _errorMessage = e.toString().replaceAll("Exception: ", "");
-      _status = AuthStatus.error;
-      notifyListeners();
+      state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: e.toString().replaceAll("Exception: ", ""),
+      );
     }
   }
 
@@ -134,9 +214,10 @@ class AuthProvider extends ChangeNotifier {
     required String password,
     required String confirmPassword,
   }) async {
-    _status = AuthStatus.loading;
-    _errorMessage = null;
-    notifyListeners();
+    state = state.copyWith(
+      status: AuthStatus.loading,
+      errorMessage: null,
+    );
 
     try {
       final user = await signupUser(
@@ -146,54 +227,73 @@ class AuthProvider extends ChangeNotifier {
         password,
         confirmPassword,
       );
-      _token = user.token;
       ApiClient().setToken(user.token);
-      _status = AuthStatus.loggedIn;
-      notifyListeners();
+      state = state.copyWith(
+        status: AuthStatus.loggedIn,
+        token: user.token,
+      );
     } catch (e) {
-      _errorMessage = e.toString().replaceAll("Exception: ", "");
-      _status = AuthStatus.error;
-      notifyListeners();
+      state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: e.toString().replaceAll("Exception: ", ""),
+      );
     }
   }
 
   // Logout
   Future<void> logout() async {
     try {
+      final repository = ref.read(authRepositoryProvider);
+      final clearBiometric = ref.read(clearBiometricEmailProvider);
+      
       await repository.logout();
-      await clearBiometricEmail();
-      _token = null;
+      await clearBiometric();
+      
       ApiClient().clearToken();
-      _status = AuthStatus.loggedOut;
-      _errorMessage = null;
-      notifyListeners();
+      state = state.copyWith(
+        status: AuthStatus.loggedOut,
+        token: null,
+        errorMessage: null,
+      );
     } catch (e) {
-      _errorMessage = e.toString().replaceAll("Exception: ", "");
-      notifyListeners();
+      state = state.copyWith(
+        errorMessage: e.toString().replaceAll("Exception: ", ""),
+      );
     }
   }
 
   // Set token from local storage
   void setToken(String token) {
-    _token = token;
     ApiClient().setToken(token);
-    _status = AuthStatus.loggedIn;
-    notifyListeners();
+    state = state.copyWith(
+      status: AuthStatus.loggedIn,
+      token: token,
+    );
   }
 
   // Enable biometric for an email
   Future<void> enableBiometricForEmail(String email) async {
     try {
-      await saveBiometricEmail(email);
+      final saveBiometric = ref.read(saveBiometricEmailProvider);
+      await saveBiometric(email);
     } catch (e) {
-      _errorMessage = 'Failed to enable biometric login';
-      notifyListeners();
+      state = state.copyWith(
+        errorMessage: 'Failed to enable biometric login',
+      );
     }
   }
 
   // Clear error
   void clearError() {
-    _errorMessage = null;
-    notifyListeners();
+    state = state.copyWith(errorMessage: null);
   }
 }
+
+// Main provider for AuthNotifier
+final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+  return AuthNotifier(
+    loginUser: ref.watch(loginUserProvider),
+    signupUser: ref.watch(signupUserProvider),
+    ref: ref,
+  );
+});

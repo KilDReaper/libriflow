@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:provider/provider.dart' as provider_pkg;
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:libriflow/features/auth/presentation/views/login_page.dart';
@@ -7,14 +8,14 @@ import 'package:libriflow/features/profile/presentation/providers/profile_provid
 import 'package:libriflow/features/auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/user.dart';
 
-class ProfileSettingsPage extends StatefulWidget {
+class ProfileSettingsPage extends ConsumerStatefulWidget {
   const ProfileSettingsPage({super.key});
 
   @override
-  State<ProfileSettingsPage> createState() => _ProfileSettingsPageState();
+  ConsumerState<ProfileSettingsPage> createState() => _ProfileSettingsPageState();
 }
 
-class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
+class _ProfileSettingsPageState extends ConsumerState<ProfileSettingsPage> {
   final _formKey = GlobalKey<FormState>();
   TextEditingController? _nameController;
   TextEditingController? _emailController;
@@ -35,7 +36,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       setState(() {
         _selectedImage = image;
       });
-      context.read<ProfileProvider>().uploadImage(image.path);
+      provider_pkg.Provider.of<ProfileProvider>(context, listen: false).uploadImage(image.path);
     }
   }
 
@@ -73,7 +74,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
   }
 
   void _logout() async {
-    await context.read<AuthProvider>().logout();
+    await ref.read(authProvider.notifier).logout();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => const LoginView()),
@@ -85,7 +86,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProfileProvider>().fetchProfile();
+      provider_pkg.Provider.of<ProfileProvider>(context, listen: false).fetchProfile();
     });
   }
 
@@ -105,7 +106,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         ],
       ),
       backgroundColor: Colors.grey.shade50,
-      body: Consumer<ProfileProvider>(
+      body: provider_pkg.Consumer<ProfileProvider>(
         builder: (context, profileProvider, child) {
           // Handle success/error messages
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -166,7 +167,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
                     onPressed: () {
-                      context.read<ProfileProvider>().fetchProfile();
+                      provider_pkg.Provider.of<ProfileProvider>(context, listen: false).fetchProfile();
                     },
                     icon: const Icon(Icons.refresh),
                     label: const Text('Retry'),
@@ -452,7 +453,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                           )
                         : ElevatedButton.icon(
                             onPressed: () {
-                              context.read<ProfileProvider>().updateUserProfile(
+                              provider_pkg.Provider.of<ProfileProvider>(context, listen: false).updateUserProfile(
                                 name: _nameController!.text,
                                 email: _emailController!.text,
                                 password: _passwordController.text.isEmpty

@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/scanner_provider.dart';
 
-class QRScannerPage extends StatefulWidget {
+class QRScannerPage extends ConsumerStatefulWidget {
   const QRScannerPage({super.key});
 
   @override
-  State<QRScannerPage> createState() => _QRScannerPageState();
+  ConsumerState<QRScannerPage> createState() => _QRScannerPageState();
 }
 
-class _QRScannerPageState extends State<QRScannerPage> {
+class _QRScannerPageState extends ConsumerState<QRScannerPage> {
   MobileScannerController cameraController = MobileScannerController(
     detectionSpeed: DetectionSpeed.noDuplicates,
   );
@@ -45,8 +45,8 @@ class _QRScannerPageState extends State<QRScannerPage> {
   Future<void> _processScan(String code, BarcodeFormat format) async {
     setState(() => isProcessing = true);
     
-    final scannerProvider = context.read<ScannerProvider>();
-    final result = await scannerProvider.borrowByQRCode(code);
+    final scannerNotifier = ref.read(scannerProvider.notifier);
+    final result = await scannerNotifier.borrowByQRCode(code);
 
     if (!mounted) return;
 
@@ -57,7 +57,8 @@ class _QRScannerPageState extends State<QRScannerPage> {
       _showSuccessDialog(result);
     } else {
       // Error - show error dialog
-      _showErrorDialog(scannerProvider.error ?? 'Failed to process scan');
+      final error = ref.read(scannerProvider).error ?? 'Failed to process scan';
+      _showErrorDialog(error);
     }
   }
 

@@ -1,42 +1,89 @@
-import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../data/datasources/scanner_remote_datasource.dart';
+import '../../data/repositories/scanner_repository_impl.dart';
 import '../../domain/usecases/borrow_by_qr_code.dart';
 
-class ScannerProvider extends ChangeNotifier {
+// State class to hold scanner state
+class ScannerState {
+  final bool isLoading;
+  final String? error;
+  final Map<String, dynamic>? lastScanResult;
+
+  ScannerState({
+    this.isLoading = false,
+    this.error,
+    this.lastScanResult,
+  });
+
+  ScannerState copyWith({
+    bool? isLoading,
+    String? error,
+    Map<String, dynamic>? lastScanResult,
+  }) {
+    return ScannerState(
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
+      lastScanResult: lastScanResult,
+    );
+  }
+}
+
+// Provider for remote data source
+final scannerRemoteDataSourceProvider = Provider<ScannerRemoteDataSource>((ref) {
+  return ScannerRemoteDataSourceImpl();
+});
+
+// Provider for repository
+final scannerRepositoryProvider = Provider((ref) {
+  return ScannerRepositoryImpl(
+    remoteDataSource: ref.watch(scannerRemoteDataSourceProvider),
+  );
+});
+
+// Provider for use case
+final borrowByQRCodeUseCaseProvider = Provider((ref) {
+  return BorrowByQRCodeUseCase(
+    repository: ref.watch(scannerRepositoryProvider),
+  );
+});
+
+// StateNotifier to manage scanner state
+class ScannerNotifier extends StateNotifier<ScannerState> {
   final BorrowByQRCodeUseCase borrowByQRCodeUseCase;
 
-  ScannerProvider({required this.borrowByQRCodeUseCase});
-
-  bool _isLoading = false;
-  String? _error;
-  Map<String, dynamic>? _lastScanResult;
-
-  bool get isLoading => _isLoading;
-  String? get error => _error;
-  Map<String, dynamic>? get lastScanResult => _lastScanResult;
+  ScannerNotifier({required this.borrowByQRCodeUseCase}) : super(ScannerState());
 
   Future<Map<String, dynamic>?> borrowByQRCode(String qrCode) async {
-    _setLoading(true);
-    _error = null;
-    _lastScanResult = null;
+    state = state.copyWith(
+      isLoading: true,
+      error: null,
+      lastScanResult: null,
+    );
+
     try {
-      _lastScanResult = await borrowByQRCodeUseCase.call(qrCode);
-      notifyListeners();
-      return _lastScanResult;
+      final result = await borrowByQRCodeUseCase.call(qrCode);
+      state = state.copyWith(
+        isLoading: false,
+        lastScanResult: result,
+      );
+      return result;
     } catch (e) {
-      _error = e.toString();
-      notifyListeners();
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
       return null;
-    } finally {
-      _setLoading(false);
     }
   }
 
-  void _setLoading(bool value) {
-    _isLoading = value;
-  }
-
   void clearError() {
-    _error = null;
-    notifyListeners();
+    state = state.copyWith(error: null);
   }
 }
+
+// Main provider for ScannerNotifier
+final scannerProvider = StateNotifierProvider<ScannerNotifier, ScannerState>((ref) {
+  return ScannerNotifier(
+    borrowByQRCodeUseCase: ref.watch(borrowByQRCodeUseCaseProvider),
+  );
+});

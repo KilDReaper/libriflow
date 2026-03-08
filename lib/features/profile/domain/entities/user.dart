@@ -12,4 +12,6 @@ class User {
     required this.phoneNumber,
     this.avatarUrl,
   });
+
+  get profilePictureUrl => null;
 }
